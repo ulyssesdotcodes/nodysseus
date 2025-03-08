@@ -27,7 +27,7 @@ export const isgraph = (g) =>
 export type WrappedPromise<T> = {
   __kind: WrappedKind;
   then: <S>(
-    fn: (t: FlattenPromise<T>) => S | WrappedPromise<S>,
+    fn: (t: FlattenPromise<T>) => S | WrappedPromise<S>
   ) => WrappedPromise<S>;
   value: T;
 };
@@ -48,14 +48,14 @@ const tryCatch = (fn, t, c) => {
 
 export const wrapPromise = <T, S>(
   t: T | PromiseLike<T>,
-  c?: <E extends Error>(e?: E) => S,
+  c?: <E extends Error>(e?: E) => S
 ): WrappedPromise<FlattenWrappedPromise<T>> =>
   (isWrappedPromise(t)
     ? t
     : {
         __kind: WRAPPED_KIND,
         then: <S>(
-          fn: (tt: FlattenPromise<typeof t>) => S | WrappedPromise<S>,
+          fn: (tt: FlattenPromise<typeof t>) => S | WrappedPromise<S>
         ) =>
           wrapPromise(
             ispromise(t)
@@ -63,54 +63,52 @@ export const wrapPromise = <T, S>(
                 ? t
                     .then(
                       fn as (
-                        value: unknown,
-                      ) => S | PromiseLike<S> | WrappedPromise<S>,
+                        value: unknown
+                      ) => S | PromiseLike<S> | WrappedPromise<S>
                     )
                     .then((v) => (isWrappedPromise(v) ? v.value : v))
                     .catch(c)
                 : t
                     .then(
                       fn as (
-                        value: unknown,
-                      ) => S | PromiseLike<S> | WrappedPromise<S>,
+                        value: unknown
+                      ) => S | PromiseLike<S> | WrappedPromise<S>
                     )
                     .then((v) => (isWrappedPromise(v) ? v.value : v))
               : tryCatch(fn, t, c),
-            c,
+            c
           ),
         value: t,
       }) as WrappedPromise<FlattenWrappedPromise<T>>;
 
 export const wrapPromiseAll = <T>(
   wrappedPromises: Array<WrappedPromise<T> | T>,
-  c?: <E extends Error>(e: E) => T,
+  c?: <E extends Error>(e: E) => T
 ): WrappedPromise<Array<any> | Promise<Array<any>>> => {
   const hasPromise = wrappedPromises.reduce(
     (acc, wrappedPromise) =>
       acc ||
       ispromise(
-        isWrappedPromise(wrappedPromise)
-          ? wrappedPromise.value
-          : wrappedPromise,
+        isWrappedPromise(wrappedPromise) ? wrappedPromise.value : wrappedPromise
       ),
-    false,
+    false
   );
   return wrapPromise(
     hasPromise
       ? Promise.all(
           wrappedPromises.map((wp) =>
-            Promise.resolve(isWrappedPromise(wp) ? wp.value : wp),
-          ),
+            Promise.resolve(isWrappedPromise(wp) ? wp.value : wp)
+          )
         )
       : wrappedPromises.map((wp) => (isWrappedPromise(wp) ? wp.value : wp)),
-    c,
+    c
   );
 };
 
 export const wrapPromiseReduce = (previousValue, arr, fn, index) =>
   wrapPromise(fn({ previousValue, currentValue: arr[index], index })).then(
     (acc) =>
-      index < arr.length - 1 ? wrapPromiseReduce(acc, arr, fn, index + 1) : acc,
+      index < arr.length - 1 ? wrapPromiseReduce(acc, arr, fn, index + 1) : acc
   );
 
 // type MaybePromiseFn<T, S> = T extends Promise<infer Item> ? ((i: Item) => S) : ((i: T) => S);
@@ -123,7 +121,7 @@ export type FlattenPromise<T> = T extends Promise<infer Item> ? Item : T;
 
 export class NodysseusError extends Error {
   cause: { node_id: string };
-  constructor(node_id, ...params) {
+  constructor(node_id: string, ...params) {
     super(...params);
 
     if (Error.captureStackTrace) {
@@ -165,11 +163,11 @@ type FlattenedGraph = {
   flat_edges: Record<string, Edge>;
 };
 const isFlattenedGraph = (
-  g: NodysseusNode | FlattenedGraph,
+  g: NodysseusNode | FlattenedGraph
 ): g is FlattenedGraph => !!(g as FlattenedGraph).flat_nodes;
 export const flattenNode = (
   graph: NodysseusNode,
-  levels = -1,
+  levels = -1
 ): FlattenedGraph | NodysseusNode =>
   !isNodeGraph(graph) || !graph.nodes || levels <= 0
     ? graph
@@ -181,7 +179,7 @@ export const flattenNode = (
               flat_nodes: Record<string, NodysseusNode>;
               flat_edges: Record<string, Edge>;
             },
-            n,
+            n
           ) =>
             isFlattenedGraph(n)
               ? Object.assign({}, acc, {
@@ -194,8 +192,8 @@ export const flattenNode = (
                           fn.name = graph.name;
                         }
                         return [fn.id, fn];
-                      }),
-                    ),
+                      })
+                    )
                   ),
                   flat_edges: Object.assign(acc.flat_edges, n.flat_edges),
                 })
@@ -203,7 +201,7 @@ export const flattenNode = (
           {
             flat_nodes: graph.nodes,
             flat_edges: graph.edges,
-          },
+          }
         );
 
 export const expand_node = (data: {
@@ -220,7 +218,7 @@ export const expand_node = (data: {
   }
 
   const args_node = Object.values(node.edges).find(
-    (e) => e.to === node.out && e.as === "args",
+    (e) => e.to === node.out && e.as === "args"
   )?.from;
   const in_edges = nolib.no.runtime.get_edges_in(data.editingGraph, node_id);
 
@@ -232,7 +230,7 @@ export const expand_node = (data: {
           nolib.no.runtime.get_node(data.editingGraph, n.id)
             ? ((acc[n.id] = create_randid(data.editingGraph)), acc)
             : n,
-        {} as Record<string, any>,
+        {} as Record<string, any>
       )
     : flattened;
 
@@ -248,7 +246,7 @@ export const expand_node = (data: {
           in_edges.map((e: Edge) => ({
             ...e,
             to: new_id_map[args_node] ?? args_node,
-          })),
+          }))
         )
         .concat([{ ...data.editingGraph.edges[node_id], from: node.out }])
         .map((e) => ({
@@ -258,7 +256,7 @@ export const expand_node = (data: {
         })),
       in_edges.concat([data.editingGraph.edges[node_id]]),
       [node_id],
-      nolib,
+      nolib
     );
 
   return {
@@ -267,10 +265,11 @@ export const expand_node = (data: {
   };
 };
 
-export const contract_node = (
-  data: { editingGraph: Graph; node_id: string; nolib: any },
-  keep_expanded = false,
-) => {
+export const contract_node = (data: {
+  editingGraph: Graph;
+  node_id: string;
+  nolib: any;
+}) => {
   const nolib = data.nolib;
   const node = data.editingGraph.nodes[data.node_id];
   const node_id = data.node_id;
@@ -282,7 +281,7 @@ export const contract_node = (
 
     const q = nolib.no.runtime.get_edges_in(
       data.editingGraph,
-      inside_nodes[0].id,
+      inside_nodes[0].id
     );
 
     let in_edge: Array<Edge> = [];
@@ -388,14 +387,14 @@ export const contract_node = (
                   ? n.id.substring(node_id.length + 1)
                   : n.id,
               },
-            ]),
+            ])
           ),
           edges,
         },
       ],
       edgesToAdd,
       edgesToRemove,
-      [...inside_node_map.values()],
+      [...inside_node_map.values()]
     );
 
     return { selected: [final_node_id] };
@@ -421,7 +420,7 @@ export const parseArg = (arg: string): FullyTypedArg & { name: string } => {
 export const ancestor_graph = (
   node_id: string,
   from_graph: Graph | SavedGraph,
-  nolib?: Record<string, any>,
+  _nolib?: Record<string, any>
 ): Graph => {
   let edges_in = [];
   const fromGraphEdges = Object.values(from_graph.edges);
@@ -437,10 +436,10 @@ export const ancestor_graph = (
     ).filter((e) => from_graph.nodes[e.from] && !graph.nodes[e.from]);
     graph.edges = Object.assign(
       graph.edges,
-      Object.fromEntries(edges_in.map((e) => [e.from, e])),
+      Object.fromEntries(edges_in.map((e) => [e.from, e]))
     );
     graph.edges_in[node_id] = Object.fromEntries(
-      edges_in.map((e) => [e.from, e]),
+      edges_in.map((e) => [e.from, e])
     );
     edges_in.forEach((e) => queue.push(e.from));
   }
@@ -450,13 +449,13 @@ export const ancestor_graph = (
 export const descendantGraph = <T>(
   nodeId: string,
   graph: Graph,
-  traverse: (nodeId: string, edgeIn: Edge) => T,
+  traverse: (nodeId: string, edgeIn: Edge) => T
 ): Record<string, T> =>
   graph.edges[nodeId]
     ? {
         [graph.edges[nodeId].to]: traverse(
           graph.edges[nodeId].to,
-          graph.edges[nodeId],
+          graph.edges[nodeId]
         ),
         ...descendantGraph(graph.edges[nodeId].to, graph, traverse),
       }
@@ -481,7 +480,7 @@ export const combineEnv = (
   data: Args,
   env: Env,
   node_id?: string,
-  _output?: string,
+  _output?: string
 ): Env => {
   if (isEnv(data)) {
     throw new Error("Can't create an env with env data");
@@ -509,40 +508,40 @@ export const mergeLib = (a: Record<string, any> | Lib, b: Lib): Lib =>
       }
     : b;
 
-const MERGE_KEYS = ["extern"];
+// const MERGE_KEYS = ["extern"];
 
-const mergeDeep = (a: Record<string, unknown>, b: Record<string, unknown>) => {
-  const aKeys = Object.keys(a);
-  const bKeys = Object.keys(b);
+// const mergeDeep = (a: Record<string, unknown>, b: Record<string, unknown>) => {
+//   const aKeys = Object.keys(a);
+//   const bKeys = Object.keys(b);
 
-  return aKeys.concat(bKeys).reduce(
-    (acc, key) =>
-      acc[key]
-        ? acc
-        : a[key] === b[key]
-          ? ((acc[key] = a[key]), acc)
-          : {
-              ...acc,
-              [key]:
-                MERGE_KEYS.includes(key) &&
-                typeof a[key] === "object" &&
-                typeof b[key] === "object"
-                  ? mergeDeep(
-                      a[key] as Record<string, unknown>,
-                      b[key] as Record<string, unknown>,
-                    )
-                  : a[key] ?? b[key],
-            },
-    {},
-  );
-};
+//   return aKeys.concat(bKeys).reduce(
+//     (acc, key) =>
+//       acc[key]
+//         ? acc
+//         : a[key] === b[key]
+//         ? ((acc[key] = a[key]), acc)
+//         : {
+//             ...acc,
+//             [key]:
+//               MERGE_KEYS.includes(key) &&
+//               typeof a[key] === "object" &&
+//               typeof b[key] === "object"
+//                 ? mergeDeep(
+//                     a[key] as Record<string, unknown>,
+//                     b[key] as Record<string, unknown>
+//                   )
+//                 : a[key] ?? b[key],
+//           },
+//     {}
+//   );
+// };
 
 const emptySet = new Set<string>();
 export function compareObjects(
   value1,
   value2,
   isUpdate = false,
-  excludedFields: Set<string> = emptySet,
+  excludedFields: Set<string> = emptySet
 ) {
   const keys1 = Object.keys(value1);
   const keys2 = !isUpdate && Object.keys(value2);
@@ -564,7 +563,7 @@ export function compareObjects(
 }
 
 export function set_mutable(obj, propsArg, value) {
-  let props, lastProp;
+  let props;
   if (Array.isArray(propsArg)) {
     props = propsArg.slice(0);
   }
@@ -577,7 +576,7 @@ export function set_mutable(obj, propsArg, value) {
   if (!Array.isArray(props)) {
     throw new Error("props arg must be an array, a string or a symbol");
   }
-  lastProp = props.pop();
+  const lastProp = props.pop();
   if (!lastProp) {
     return false;
   }
@@ -633,8 +632,8 @@ export const handleError = (e, lib, graph, node, graphid) => {
     "grapherror",
     new NodysseusError(
       graphid + "/" + error_node.id,
-      e instanceof AggregateError ? "Error in node chain" : e,
-    ),
+      e instanceof AggregateError ? "Error in node chain" : e
+    )
   );
 
   return e;

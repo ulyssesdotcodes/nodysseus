@@ -9,7 +9,6 @@ import {
   Graph,
   Edge,
   NodysseusNode,
-  RefStore,
   EdgeNoAs,
   NodeMetadata,
   NodeArg,
@@ -66,7 +65,7 @@ export type HyperappState = {
   code_editor_nodeid?: StateEffectType<string>;
   code_editor_nodeid_field?: StateField<string>;
   codeEditorExtensions?: Compartment;
-  custom_editor_result: {};
+  custom_editor_result:any;
   showHelp: boolean;
   refGraphs: Array<string>;
   selectedMetadata?: NodeMetadata;
@@ -191,7 +190,9 @@ export type SharedWorkerMessageKind = _SharedWorkerMessageKind;
 export type TRespondableSharedWorkerMessage<T> =
   T extends _SharedWorkerMessageKind
     ? _SharedWorkerMessages[T] extends { to: any; from: any }
-      ? (TSharedWorkerMessageTo<T> | TSharedWorkerMessageFrom<T>) & { messageId: string }
+      ? (TSharedWorkerMessageTo<T> | TSharedWorkerMessageFrom<T>) & {
+          messageId: string;
+        }
       : never
     : never;
 
@@ -251,9 +252,9 @@ export type SharedWorkerMessageFrom =
   TSharedWorkerMessageFrom<_SharedWorkerMessageKind>;
 
 export const expectSharedWorkerMessageResponse = <
-  T extends _SharedWorkerMessageKind,
+  T extends _SharedWorkerMessageKind
 >(
-  m: SharedWorkerMessageTo | SharedWorkerMessageFrom,
+  m: SharedWorkerMessageTo | SharedWorkerMessageFrom
 ): m is TRespondableSharedWorkerMessage<T> =>
   !!(m as TRespondableSharedWorkerMessage<T>).messageId;
 

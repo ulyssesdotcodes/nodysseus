@@ -33,58 +33,58 @@ export default class Fuse<T> {
   setCollection(docs: ReadonlyArray<T>, index?: Fuse.FuseIndex<T>): void;
 
   /**
-     * Adds a doc to the end the list.
-     */
+   * Adds a doc to the end the list.
+   */
   add(doc: T): void;
 
   /**
-     * Removes all documents from the list which the predicate returns truthy for,
-     * and returns an array of the removed docs.
-     * The predicate is invoked with two arguments: (doc, index).
-     */
+   * Removes all documents from the list which the predicate returns truthy for,
+   * and returns an array of the removed docs.
+   * The predicate is invoked with two arguments: (doc, index).
+   */
   remove(predicate: (doc: T, idx: number) => boolean): T[];
 
   /**
-     * Removes the doc at the specified index.
-     */
+   * Removes the doc at the specified index.
+   */
   removeAt(idx: number): void;
 
   /**
-     * Returns the generated Fuse index
-     */
+   * Returns the generated Fuse index
+   */
   getIndex(): Fuse.FuseIndex<T>;
 
   /**
-     * Return the current version.
-     */
-  static version: string
+   * Return the current version.
+   */
+  static version: string;
 
   /**
-     * Use this method to pre-generate the index from the list, and pass it
-     * directly into the Fuse instance.
-     *
-     * _Note that Fuse will automatically index the table if one isn't provided
-     * during instantiation._
-     *
-     * ```typescript
-     * const list: MyType[] = [myType1, myType2, etc...]
-     *
-     * const index = Fuse.createIndex<MyType>(
-     *  keys: ['key1', 'key2']
-     *  list: list
-     * )
-     *
-     * const options: Fuse.IFuseOptions<MyType> = {
-     *  keys: ['key1', 'key2']
-     * }
-     *
-     * const myFuse = new Fuse(list, options, index)
-     * ```
-     * @param keys    The keys to index
-     * @param list    The list from which to create an index
-     * @param options?
-     * @returns An indexed list
-     */
+   * Use this method to pre-generate the index from the list, and pass it
+   * directly into the Fuse instance.
+   *
+   * _Note that Fuse will automatically index the table if one isn't provided
+   * during instantiation._
+   *
+   * ```typescript
+   * const list: MyType[] = [myType1, myType2, etc...]
+   *
+   * const index = Fuse.createIndex<MyType>(
+   *  keys: ['key1', 'key2']
+   *  list: list
+   * )
+   *
+   * const options: Fuse.IFuseOptions<MyType> = {
+   *  keys: ['key1', 'key2']
+   * }
+   *
+   * const myFuse = new Fuse(list, options, index)
+   * ```
+   * @param keys    The keys to index
+   * @param list    The list from which to create an index
+   * @param options?
+   * @returns An indexed list
+   */
   static createIndex<U>(
     keys: Array<Fuse.FuseOptionKey<U>>,
     list: ReadonlyArray<U>,
@@ -110,10 +110,10 @@ export class FuseIndex<T> {
   };
 }
 
-  type FuseGetFunction<T> = (
-    obj: T,
-    path: string | string[]
-  ) => ReadonlyArray<string> | string;
+type FuseGetFunction<T> = (
+  obj: T,
+  path: string | string[]
+) => ReadonlyArray<string> | string;
 
 export type FuseIndexOptions<T> = {
   getFn: FuseGetFunction<T>;
@@ -172,61 +172,61 @@ export type FuseSortFunction = (
   b: FuseSortFunctionArg
 ) => number;
 
-  // title: {
-  //   '$': "Old Man's War",
-  //   'n': 0.5773502691896258
-  // }
-  type RecordEntryObject = {
-    v: string; // The text value
-    n: number; // The field-length norm
-  };
+// title: {
+//   '$': "Old Man's War",
+//   'n': 0.5773502691896258
+// }
+type RecordEntryObject = {
+  v: string; // The text value
+  n: number; // The field-length norm
+};
 
-  // 'author.tags.name': [{
-  //   'v': 'pizza lover',
-  //   'i': 2,
-  //   'n: 0.7071067811865475
-  // }
-  type RecordEntryArrayItem = ReadonlyArray<RecordEntryObject & { i: number }>;
+// 'author.tags.name': [{
+//   'v': 'pizza lover',
+//   'i': 2,
+//   'n: 0.7071067811865475
+// }
+type RecordEntryArrayItem = ReadonlyArray<RecordEntryObject & { i: number }>;
 
-  // TODO: this makes it difficult to infer the type. Need to think more about this
-  type RecordEntry = {
-    [key: string]: RecordEntryObject | RecordEntryArrayItem;
-  };
+// TODO: this makes it difficult to infer the type. Need to think more about this
+type RecordEntry = {
+  [key: string]: RecordEntryObject | RecordEntryArrayItem;
+};
 
-  // {
-  //   i: 0,
-  //   '$': {
-  //     '0': { v: "Old Man's War", n: 0.5773502691896258 },
-  //     '1': { v: 'Codenar', n: 1 },
-  //     '2': [
-  //       { v: 'pizza lover', i: 2, n: 0.7071067811865475 },
-  //       { v: 'helo wold', i: 1, n: 0.7071067811865475 },
-  //       { v: 'hello world', i: 0, n: 0.7071067811865475 }
-  //     ]
-  //   }
-  // }
-  type FuseIndexObjectRecord = {
-    i: number; // The index of the record in the source list
-    $: RecordEntry;
-  };
+// {
+//   i: 0,
+//   '$': {
+//     '0': { v: "Old Man's War", n: 0.5773502691896258 },
+//     '1': { v: 'Codenar', n: 1 },
+//     '2': [
+//       { v: 'pizza lover', i: 2, n: 0.7071067811865475 },
+//       { v: 'helo wold', i: 1, n: 0.7071067811865475 },
+//       { v: 'hello world', i: 0, n: 0.7071067811865475 }
+//     ]
+//   }
+// }
+type FuseIndexObjectRecord = {
+  i: number; // The index of the record in the source list
+  $: RecordEntry;
+};
 
-  // {
-  //   keys: null,
-  //   list: [
-  //     { v: 'one', i: 0, n: 1 },
-  //     { v: 'two', i: 1, n: 1 },
-  //     { v: 'three', i: 2, n: 1 }
-  //   ]
-  // }
-  type FuseIndexStringRecord = {
-    i: number; // The index of the record in the source list
-    v: string; // The text value
-    n: number; // The field-length norm
-  };
+// {
+//   keys: null,
+//   list: [
+//     { v: 'one', i: 0, n: 1 },
+//     { v: 'two', i: 1, n: 1 },
+//     { v: 'three', i: 2, n: 1 }
+//   ]
+// }
+type FuseIndexStringRecord = {
+  i: number; // The index of the record in the source list
+  v: string; // The text value
+  n: number; // The field-length norm
+};
 
-  type FuseIndexRecords =
-    | ReadonlyArray<FuseIndexObjectRecord>
-    | ReadonlyArray<FuseIndexStringRecord>;
+type FuseIndexRecords =
+  | ReadonlyArray<FuseIndexObjectRecord>
+  | ReadonlyArray<FuseIndexStringRecord>;
 
 // {
 //   name: 'title',
@@ -275,10 +275,10 @@ export interface IFuseOptions<T> {
   useExtendedSearch?: boolean;
 }
 
-  // Denotes the start/end indices of a match
-  //                 start    end
-  //                   ↓       ↓
-  type RangeTuple = [number, number];
+// Denotes the start/end indices of a match
+//                 start    end
+//                   ↓       ↓
+type RangeTuple = [number, number];
 
 export type FuseResultMatch = {
   indices: ReadonlyArray<RangeTuple>;
@@ -299,12 +299,12 @@ export type FuseResult<T> = {
 };
 
 export type Expression =
-    | { [key: string]: string }
-    | {
+  | { [key: string]: string }
+  | {
       $path: ReadonlyArray<string>;
       $val: string;
     }
-    | { $and?: Expression[] }
-    | { $or?: Expression[] };
+  | { $and?: Expression[] }
+  | { $or?: Expression[] };
 
-export const config: Required<IFuseOptions<any>>
+export const config: Required<IFuseOptions<any>>;

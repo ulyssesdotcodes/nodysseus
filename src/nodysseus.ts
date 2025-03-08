@@ -8,9 +8,8 @@ import {
   base_node,
   compareObjects,
   descendantGraph,
-  handleError,
   NodysseusError,
-  create_randid
+  create_randid,
 } from "./util.js";
 import {
   isNodeGraph,
@@ -25,26 +24,19 @@ import {
   isEnv,
   Args,
   isArgs,
-  ResolvedArgs,
   RunOptions,
   TypedArg,
   Extern,
   ValueNode,
   isLib,
-  isGraph,
-  MemoryState,
-  MemoryReference,
   isMemory,
-  NodeMetadata,
   ApFunction,
 } from "./types.js";
-import { combineEnv, newLib, newEnv, mergeLib } from "./util.js";
+import { newLib } from "./util.js";
 import generic from "./generic.js";
 import * as externs from "./externs.js";
 import { initListeners } from "./events.js";
-import { objectRefStore } from "./store.js";
 import { parser } from "@lezer/javascript";
-import { json } from "@codemirror/lang-json";
 
 const generic_nodes = generic.nodes;
 
@@ -65,7 +57,7 @@ let nodysseus: NodysseusStore;
 const resfetch =
   typeof fetch !== "undefined"
     ? fetch
-    : (urlstr, params?) =>
+    : (urlstr: string, params?: { headers; method: string; body }) =>
         import("node:https").then(
           (https) =>
             new Promise<string | Response>((resolve) => {
@@ -85,13 +77,13 @@ const resfetch =
                   }
                   const data = Buffer.concat(buffer).toString();
                   resolve(data);
-                },
+                }
               );
               if (params.body) {
                 req.write(params.body);
               }
               req.end();
-            }),
+            })
         );
 
 export const nodysseus_get = (
@@ -99,8 +91,7 @@ export const nodysseus_get = (
   propsArg: string,
   lib: Lib,
   defaultValue = undefined,
-  props: Array<string> = [],
-  options: RunOptions = {},
+  props: Array<string> = []
 ) => {
   const objArg = obj;
   obj = isEnv(obj) ? obj.data : obj;
@@ -135,7 +126,7 @@ export const nodysseus_get = (
       return obj.then((r) =>
         props.length > 0
           ? nodysseus_get(r, propsArg, lib, defaultValue, props)
-          : r,
+          : r
       );
     }
 
@@ -161,14 +152,14 @@ export const nodysseus_get = (
       return obj.then((r) =>
         props.length > 0
           ? nodysseus_get(r, propsArg, lib, defaultValue, props)
-          : r,
+          : r
       );
     }
   }
   return obj;
 };
 
-function compare(value1, value2) {
+function compare(value1: any, value2: any) {
   if (value1 === value2) {
     return true;
   }
@@ -217,7 +208,7 @@ function compareNativeSubrefs(value1, value2) {
   return value1.toString() === value2.toString();
 }
 
-function compareArrays(value1, value2) {
+function compareArrays(value1: any[], value2: any[]) {
   const len = value1.length;
   if (len != value2.length) {
     return false;
@@ -232,11 +223,11 @@ function compareArrays(value1, value2) {
   return alike;
 }
 
-const hashcode = function (str, seed = 0) {
+const hashcode = function (str: string, seed = 0) {
   let h1 = 0xdeadbeef ^ seed,
     h2 = 0x41c6ce57 ^ seed;
   let i = str.length,
-    ch;
+    ch: number;
   while (i > 0) {
     i--;
     ch = str.charCodeAt(i);
@@ -260,9 +251,9 @@ export const run_extern = (
   data: Args,
   lib: Lib,
   options: RunOptions,
-  node?: NodysseusNode,
+  node?: NodysseusNode
 ) => {
-  let argColonIdx;
+  let argColonIdx: number;
   let argspromise = false;
   const isArgsArray = Array.isArray(extern.args);
   const externArgs: Array<[string, TypedArg]> = isArgsArray
@@ -303,7 +294,7 @@ export const run_extern = (
       const res = (typeof extern === "function" ? extern : extern.fn)(
         ...(isArgsArray
           ? as
-          : [Object.fromEntries(externArgs.map((a, idx) => [a[0], as[idx]]))]),
+          : [Object.fromEntries(externArgs.map((a, idx) => [a[0], as[idx]]))])
       );
       return res;
     });
@@ -314,9 +305,9 @@ export const run_extern = (
         ? resArgs
         : [
             Object.fromEntries(
-              externArgs.map((a, idx) => [a[0], resArgs[idx]]),
+              externArgs.map((a, idx) => [a[0], resArgs[idx]])
             ),
-          ]),
+          ])
     );
     return res;
   }
@@ -326,7 +317,7 @@ export const node_extern = (
   node: RefNode,
   data: Args,
   lib: Lib,
-  options: RunOptions,
+  options: RunOptions
 ) => {
   const libExternFn =
     node.value.startsWith("extern.") && node.value.substring(7);
@@ -337,7 +328,7 @@ export const node_extern = (
     data,
     lib,
     options,
-    node,
+    node
   );
 };
 
@@ -359,7 +350,7 @@ const runtimefn = () => {
           ...acc,
           [edge.to]: { ...(acc[edge.to] ?? {}), [edge.from]: edge },
         }),
-        {},
+        {}
       );
     }
   });
@@ -379,18 +370,18 @@ const runtimefn = () => {
     lib: Lib | Record<string, any>,
     changedNodes: Array<string> = [],
     broadcast = false,
-    source?,
+    source?
   ): Graph | Promise<Graph> =>
     wrapPromise(get_parentest(graph)).then((parent) => {
       if (parent) {
         return (lib.data ?? lib).no.runtime.change_graph(parent, lib, [
           (typeof graph === "string" ? graph : graph.id).substring(
-            parent.id.length + 1,
+            parent.id.length + 1
           ),
         ]);
       } else {
         return wrapPromise(
-          typeof graph === "string" ? get_ref(graph) : graph,
+          typeof graph === "string" ? get_ref(graph) : graph
         ).then((graph) => {
           const changedNodesSet = new Set();
           while (changedNodes.length > 0) {
@@ -398,7 +389,7 @@ const runtimefn = () => {
             if (!changedNodesSet.has(node)) {
               changedNodesSet.add(node);
               Object.keys(descendantGraph(node, graph, (node) => node)).forEach(
-                (n) => changedNodes.push(n),
+                (n) => changedNodes.push(n)
               );
             }
           }
@@ -407,14 +398,14 @@ const runtimefn = () => {
             { graph, dirtyNodes: [...changedNodesSet.keys()], source },
             isLib(lib) ? lib : newLib(lib),
             {},
-            broadcast,
+            broadcast
           );
           publish(
             "graphupdate",
             { graph, dirtyNodes: [...changedNodesSet.keys()], source },
             isLib(lib) ? lib : newLib(lib),
             {},
-            broadcast,
+            broadcast
           );
           return graph;
         }).value;
@@ -422,7 +413,7 @@ const runtimefn = () => {
     }).value;
 
   const updatepublish = {};
-  const update_args = (id, args, lib: Lib) => {
+  const update_args = (id: string, args, lib: Lib) => {
     let prevargs = nodysseus.state.get(id);
     const graphid = id.includes("#") ? id.split("#")[0] : id;
 
@@ -456,10 +447,10 @@ const runtimefn = () => {
                 dirtyNodes:
                   node_id &&
                   Object.keys(
-                    descendantGraph(node_id, updatedgraph, (node) => node),
+                    descendantGraph(node_id, updatedgraph, (node) => node)
                   ),
               },
-              lib,
+              lib
             );
           }
           return args;
@@ -469,10 +460,10 @@ const runtimefn = () => {
     return args;
   };
 
-  const get_ref = (id, otherwise?) => {
+  const get_ref = (id: string, otherwise?) => {
     return wrapPromise(generic_nodes[id] ?? nodysseus.refs.get(id)).then(
       (graph) => {
-        if(graph) return graph;
+        if (graph) return graph;
 
         const newGraph = otherwise && {
           ...otherwise,
@@ -488,35 +479,36 @@ const runtimefn = () => {
           //   ...otherwise.edges
           // },
           // edges_in: undefined
-        }
+        };
 
-        return otherwise && nodysseus.refs.set(id, newGraph)
+        return otherwise && nodysseus.refs.set(id, newGraph);
 
         // TODO: make creating a graph create new ids
 
         const nodeIdMap = new Map();
         const nodes = Object.values(newGraph.nodes) as NodysseusNode[];
-        for(let node of nodes) {
-          if(node.id === "out") {
-            nodeIdMap.set("out", "out")
+        for (const node of nodes) {
+          if (node.id === "out") {
+            nodeIdMap.set("out", "out");
             continue;
           }
           const oldId = node.id;
           delete newGraph.nodes[oldId];
           node.id = create_randid(newGraph);
           newGraph.nodes[node.id] = node;
-          nodeIdMap.set(oldId, node.id)
+          nodeIdMap.set(oldId, node.id);
         }
 
-        newGraph.edges = Object.fromEntries((Object.values(newGraph.edges) as Edge[])
-          .map(e => [nodeIdMap.get(e.from), {...e, to: nodeIdMap.get(e.to ), from: nodeIdMap.get(e.from)}]));
-        console.log(newGraph)
-
-        return (
-          (otherwise &&
-            nodysseus.refs.set(id, newGraph))
+        newGraph.edges = Object.fromEntries(
+          (Object.values(newGraph.edges) as Edge[]).map((e) => [
+            nodeIdMap.get(e.from),
+            { ...e, to: nodeIdMap.get(e.to), from: nodeIdMap.get(e.from) },
+          ])
         );
-      },
+        console.log(newGraph);
+
+        return otherwise && nodysseus.refs.set(id, newGraph);
+      }
     ).value;
   };
   const add_ref = (graph: NodysseusNode) => {
@@ -527,7 +519,7 @@ const runtimefn = () => {
       }
     })[0];
   };
-  const remove_ref = (id) =>
+  const remove_ref = (id: string) =>
     wrapPromise(nodysseus.refs.keys()).then((keys) => {
       if (keys.includes(id)) {
         return nodysseus.refs.delete(id);
@@ -535,15 +527,15 @@ const runtimefn = () => {
         return Promise.all(
           keys
             .filter((k) => k.startsWith(`@${id}`))
-            .map((k) => nodysseus.refs.delete(k)),
+            .map((k) => nodysseus.refs.delete(k))
         );
       }
     }).value;
 
   const get_node = (graph: Graph, id: string) => graph.nodes[id];
-  const get_edge = (graph, from) =>
+  const get_edge = (graph: string | Graph, from: string | number) =>
     wrapPromise(get_graph(graph)).then((g) => g?.edges[from]).value;
-  const get_edges_in = (graph: Graph, id) =>
+  const get_edges_in = (graph: Graph, id: string | number) =>
     Object.hasOwn(graph.edges_in, id) ? Object.values(graph.edges_in[id]) : [];
   // wrapPromise(get_graph(graph))
   //   .then(g => {
@@ -559,35 +551,35 @@ const runtimefn = () => {
   //   }).value
   const get_edge_out = get_edge;
 
-  const get_args = (graph) =>
+  const get_args = (graph: string | Graph) =>
     nodysseus.state.get(typeof graph === "string" ? graph : graph.id) ?? {};
   const get_graph = (
-    graph: string | Graph,
+    graph: string | Graph
   ): Graph | Promise<Graph> | undefined =>
     wrapPromise(
-      nodysseus.refs.get(typeof graph === "string" ? graph : graph.id),
+      nodysseus.refs.get(typeof graph === "string" ? graph : graph.id)
     ).then((g: NodysseusNode) => {
       return isNodeGraph(g)
         ? g
         : typeof graph !== "string" && isNodeGraph(graph)
-          ? graph
-          : undefined;
+        ? graph
+        : undefined;
     }).value;
   const get_parent = (graph) => {
     return nodysseus.parents.get(
-      typeof graph === "string" ? graph : graph && graph.id,
+      typeof graph === "string" ? graph : graph && graph.id
     );
   };
   const getGraphIdRef = (graphid) => {
     return wrapPromise(nodysseus.parents.get(graphid)).then(
-      (res) => res?.nodeRef,
+      (res) => res?.nodeRef
     ).value;
   };
   const get_parentest = (graph) => {
     return wrapPromise(
-      nodysseus.parents.get(typeof graph === "string" ? graph : graph.id),
+      nodysseus.parents.get(typeof graph === "string" ? graph : graph.id)
     ).then(
-      (parent) => parent && parent.parentest && get_graph(parent.parentest),
+      (parent) => parent && parent.parentest && get_graph(parent.parentest)
     ).value;
   };
   const get_path = (graph, path) => {
@@ -624,8 +616,8 @@ const runtimefn = () => {
             fn: new Function(
               `return function _${name.replace(
                 /(\s|\/)/g,
-                "_",
-              )}(_lib, _node, _graph_input_value${orderedargs}){${script}}`,
+                "_"
+              )}(_lib, _node, _graph_input_value${orderedargs}){${script}}`
             )(),
             // ` this comment is here because my syntax highlighter is not well
           });
@@ -641,9 +633,9 @@ const runtimefn = () => {
         ? ([] as Array<Graph>)
         : wrapPromise(get_graph(graphid)).then(
             (graph) =>
-              wrapPromiseAll(Object.values(graph.nodes).map((node) => [])).then<
+              wrapPromiseAll(Object.values(graph.nodes).map(() => [])).then<
                 Graph[]
-              >((nodeGraphs) => nodeGraphs.flat().concat([graph])).value,
+              >((nodeGraphs) => nodeGraphs.flat().concat([graph])).value
           ).value,
     change_graph,
     update_graph: (graphid, lib: Lib) =>
@@ -692,7 +684,7 @@ const runtimefn = () => {
           addedEdges,
           removedEdges,
           removedNodes,
-        }),
+        })
       );
       // if(Array.isArray(remove)) {
       //   await Promise.all(remove.map(e => nodysseus.refs.remove_edge(graphId, e)))
@@ -707,7 +699,7 @@ const runtimefn = () => {
       return change_graph(
         nodysseus.refs.get(graphId) as Graph,
         lib,
-        addedEdges.map((e) => e.to).concat(addedNodes.map((n) => n.id)),
+        addedEdges.map((e) => e.to).concat(addedNodes.map((n) => n.id))
       );
     },
     add_node: (graph: Graph, node: NodysseusNode, lib: Lib) => {
@@ -734,7 +726,7 @@ const runtimefn = () => {
       edges: Edge[],
       remove_edges: Edge[],
       remove_nodes: NodysseusNode[],
-      lib: Lib,
+      lib: Lib
     ) => {
       const graphId = typeof graph === "string" ? graph : graph.id;
       nodysseus.refs.add_nodes_edges({
@@ -750,7 +742,7 @@ const runtimefn = () => {
         nodes
           .concat(remove_nodes)
           .map((n) => n.id)
-          .concat(edges.concat(remove_edges).flatMap((e) => [e.to, e.from])),
+          .concat(edges.concat(remove_edges).flatMap((e) => [e.to, e.from]))
       );
     },
     delete_node: (graph: Graph, id, lib: Lib, changeEdges = true) => {
@@ -762,7 +754,7 @@ const runtimefn = () => {
 
         const current_child_edges = lib.data.no.runtime.get_edges_in(
           graph,
-          parent_edge.to,
+          parent_edge.to
         );
         const new_child_edges = child_edges.map((e, i) => ({
           ...e,
@@ -771,12 +763,12 @@ const runtimefn = () => {
             i === 0
               ? parent_edge.as
               : !e.as
-                ? e.as
-                : current_child_edges.find(
-                      (ce) => ce.as === e.as && ce.from !== id,
-                    )
-                  ? e.as + "1"
-                  : e.as,
+              ? e.as
+              : current_child_edges.find(
+                  (ce) => ce.as === e.as && ce.from !== id
+                )
+              ? e.as + "1"
+              : e.as,
         }));
 
         if (changeEdges === undefined) {
@@ -793,7 +785,7 @@ const runtimefn = () => {
             lib,
             current_child_edges
               .concat(new_child_edges)
-              .flatMap((e) => [e.to, e.from]),
+              .flatMap((e) => [e.to, e.from])
           );
         }
       });
@@ -823,7 +815,7 @@ const runtimefn = () => {
             nodeRef,
           };
           nodysseus.parents.set(graphid, new_parent);
-        },
+        }
       ).value;
     },
     undo: (id: string) => nodysseus.refs.undo && nodysseus.refs.undo(id),
@@ -889,7 +881,7 @@ const nolib: Record<string, any> & {
         kvs &&
         typeof kvs === "object" &&
         wrapPromiseAll(
-          Object.entries(kvs).map((kv) => nodysseus.persist.set(...kv)),
+          Object.entries(kvs).map((kv) => nodysseus.persist.set(...kv))
         ).value,
     },
     memoryUnwrap: {
@@ -928,7 +920,7 @@ const nolib: Record<string, any> & {
         const getPrototypeNames = (obj) =>
           obj && typeof obj === "object" && Object.getPrototypeOf(obj)
             ? Object.getOwnPropertyNames(obj).concat(
-                getPrototypeNames(Object.getPrototypeOf(obj)),
+                getPrototypeNames(Object.getPrototypeOf(obj))
               )
             : [];
         if (_output === "metadata") {
@@ -946,7 +938,7 @@ const nolib: Record<string, any> & {
                 ? _path.substring(3)
                 : _path,
               _lib,
-              def,
+              def
             )
           : target;
       },
@@ -961,11 +953,11 @@ const nolib: Record<string, any> & {
           k.length === 1
             ? { ...o, [k[0]]: v }
             : o && typeof o === "object" && Object.hasOwn(o, k[0])
-              ? {
-                  ...o,
-                  [k[0]]: check(o[k[0]], v, k.slice(1)),
-                }
-              : o;
+            ? {
+                ...o,
+                [k[0]]: check(o[k[0]], v, k.slice(1)),
+              }
+            : o;
         const ret =
           (value !== undefined && ispromise(value)) || ispromise(target)
             ? Promise.all([
@@ -1016,7 +1008,7 @@ const nolib: Record<string, any> & {
             nodevalue || path,
             (_lib.data ?? _lib).no.isMemory(value)
               ? externs.memoryUnwrap(value)
-              : value,
+              : value
           );
         }
         return target;
@@ -1028,7 +1020,7 @@ const nolib: Record<string, any> & {
       fn: (array) => {
         const isarraypromise = array.reduce(
           (acc, v) => acc || ispromise(v),
-          false,
+          false
         );
         return isarraypromise ? Promise.all(array) : array;
       },
@@ -1041,7 +1033,7 @@ const nolib: Record<string, any> & {
           : wrapPromiseAll(
               Object.entries(args)
                 .sort((akv, bkv) => akv[0].localeCompare(bkv[0]))
-                .map((kv: [string, any]) => wrapPromise(kv[1])),
+                .map((kv: [string, any]) => wrapPromise(kv[1]))
             ).then((r) => r.map((rv) => rv)).value,
     },
     fetch: {
@@ -1052,7 +1044,7 @@ const nolib: Record<string, any> & {
     import_module: {
       args: ["url", "__graph_value", "_lib"],
       fn: (url, graphvalue) => {
-        console.log("import module", url, graphvalue)
+        console.log("import module", url, graphvalue);
         const urlval = url || graphvalue;
         if (!urlval) return;
         const stateid = `__jsimport:${urlval}`;
@@ -1061,7 +1053,7 @@ const nolib: Record<string, any> & {
         const promise = import(urlval)
           .then((jsmodule) => jsmodule.default ?? jsmodule)
           .then(
-            (jsmodule) => (nodysseus.state.set(stateid, jsmodule), jsmodule),
+            (jsmodule) => (nodysseus.state.set(stateid, jsmodule), jsmodule)
           );
         nodysseus.state.set(stateid, promise);
         return promise;
@@ -1087,7 +1079,7 @@ const nolib: Record<string, any> & {
                 .filter(
                   (n) =>
                     typeof Object.getOwnPropertyDescriptor(obj, n).value ===
-                    "function",
+                    "function"
                 )
                 .concat(getPrototypeChainMethods(Object.getPrototypeOf(obj)))
             : [];
@@ -1103,25 +1095,25 @@ const nolib: Record<string, any> & {
                         !acc[0] && v !== undefined,
                         acc[0] || v !== undefined ? acc[1].concat(v) : acc[1],
                       ],
-                      [false, []],
+                      [false, []]
                     )[1]
-                    .reverse(),
+                    .reverse()
                 )
               : self(args === undefined ? [] : args);
           } else {
             const ng_fn = (_lib.data ?? _lib).no.nodysseus_get(
               self ?? _lib.data ?? _lib,
               fn || nodevalue,
-              _lib.data ?? _lib,
+              _lib.data ?? _lib
             );
             const ng_self = (fn || nodevalue)?.includes(".")
               ? (_lib.data ?? _lib).no.nodysseus_get(
                   self,
                   (fn || nodevalue).substring(
                     0,
-                    (fn || nodevalue).lastIndexOf("."),
+                    (fn || nodevalue).lastIndexOf(".")
                   ),
-                  _lib.data ?? _lib,
+                  _lib.data ?? _lib
                 )
               : self;
             if (_output === "metadata") {
@@ -1145,17 +1137,17 @@ const nolib: Record<string, any> & {
                       !acc[0] && v !== undefined,
                       acc[0] || v !== undefined ? acc[1].concat(v) : acc[1],
                     ],
-                    [false, []],
+                    [false, []]
                   )[1]
                   .reverse()
               : args === undefined
-                ? []
-                : [args];
+              ? []
+              : [args];
             const ret = (_lib.data ?? _lib).no.ispromise(ng_fn)
               ? ng_fn.then((f: any) => f.apply(fnargs))
               : typeof ng_fn === "function"
-                ? ng_fn.apply(ng_self, fnargs)
-                : ng_self;
+              ? ng_fn.apply(ng_self, fnargs)
+              : ng_self;
             return ret;
           }
         };
@@ -1167,7 +1159,7 @@ const nolib: Record<string, any> & {
     },
     merge_objects_mutable: {
       args: ["target: default", "_node_args", "_lib", "_runoptions"],
-      fn: (target, args, lib, options) => {
+      fn: (target, args) => {
         const seen = new Set();
         const merge = (target = {}, value) => {
           if (seen.has(value)) return target;
@@ -1175,7 +1167,7 @@ const nolib: Record<string, any> & {
           Object.entries(value)
             .filter((kv) => !kv[0].startsWith("_"))
             .map((kv) =>
-              isArgs(kv[1]) ? [kv[0], Object.fromEntries(kv[1].entries())] : kv,
+              isArgs(kv[1]) ? [kv[0], Object.fromEntries(kv[1].entries())] : kv
             )
             .forEach(([k, v]: [string, unknown]) => {
               if (
@@ -1196,19 +1188,19 @@ const nolib: Record<string, any> & {
         return wrapPromiseAll(
           Object.keys(args)
             .filter((k) => k !== "target" && !k.startsWith("_"))
-            .map((k) => [k, args[k]]),
+            .map((k) => [k, args[k]])
         )
           .then(
             (inputs) =>
               wrapPromiseAll(
-                inputs.map((kv) => [kv[0], kv[1]]).map((kv) => [kv[0], kv[1]]),
+                inputs.map((kv) => [kv[0], kv[1]]).map((kv) => [kv[0], kv[1]])
               ).then((kvs) =>
                 Object.fromEntries(
                   kvs
                     .filter((kv) => kv[1] !== undefined)
-                    .map((kv) => [kv[0], kv[1]]),
-                ),
-              ).value,
+                    .map((kv) => [kv[0], kv[1]])
+                )
+              ).value
           )
           .then((resolved) => {
             Object.values(resolved).forEach((v) => merge(target, v));
@@ -1249,13 +1241,14 @@ const nolib: Record<string, any> & {
           ...Object.entries(args)
             .filter((kv) => kv[0] !== "__graph_value")
             .sort((a, b) => a[0].localeCompare(b[0]))
-            .map((kv) => externs.memoryUnwrap(kv[1])),
+            .map((kv) => externs.memoryUnwrap(kv[1]))
         ),
     },
     add: {
       args: ["_node_args"],
       resolve: true,
-      fn: (args) => Object.values(args).reduce((acc : number, v : number) => acc + v, 0),
+      fn: (args) =>
+        Object.values(args).reduce((acc: number, v: number) => acc + v, 0),
     },
     and: {
       args: ["_node_args"],
@@ -1274,7 +1267,7 @@ const nolib: Record<string, any> & {
       fn: (args) =>
         Object.entries(args).reduce(
           (acc, e) => acc * (typeof e[1] === "number" ? e[1] : 1),
-          1,
+          1
         ),
     },
     negate: {
@@ -1288,7 +1281,7 @@ const nolib: Record<string, any> & {
       fn: (args) =>
         Object.values(args).reduce(
           (acc: any, v: any) => acc / externs.memoryUnwrap(v),
-          1,
+          1
         ),
     },
     mod: {
@@ -1348,7 +1341,7 @@ const nolib: Record<string, any> & {
           _lib,
           typeof window !== "undefined"
             ? window[__graph_value]
-            : self[__graph_value],
+            : self[__graph_value]
         );
         return (
           fn &&
@@ -1372,8 +1365,8 @@ const nolib: Record<string, any> & {
             wrapPromiseAll(
               keys
                 .filter((k) => k.startsWith(graphid))
-                .map((k) => nodysseus.persist.get(k).then((v) => [k, v])),
-            ).then((kvs) => Object.fromEntries(kvs)).value,
+                .map((k) => nodysseus.persist.get(k).then((v) => [k, v]))
+            ).then((kvs) => Object.fromEntries(kvs)).value
         ).value,
     },
     functionParameters: {

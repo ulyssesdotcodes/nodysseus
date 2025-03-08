@@ -12,21 +12,15 @@ import {
   nolibLib,
 } from "../nodysseus.js";
 import {
-  Args,
-  compareNodes,
   Edge,
-  ExportedGraph,
   FullyTypedArg,
   Graph,
-  isArgs,
-  isExportedGraph,
   isNodeGraph,
   isNodeRef,
   isTypedArg,
   NodeArg,
   NodeMetadata,
   NodysseusNode,
-  RefNode,
   TypedArg,
 } from "../types.js";
 import {
@@ -78,23 +72,13 @@ import { parser } from "@lezer/javascript";
 import { v4 as uuid } from "uuid";
 import { runh } from "./hyperapp.js";
 import domTypes from "../html-dom-types.json" assert { type: "json" };
-import {
-  Compartment,
-  EditorSelection,
-  StateEffectType,
-  StateField,
-} from "@codemirror/state";
+import { Compartment, StateEffectType, StateField } from "@codemirror/state";
 import { json, jsonParseLinter } from "@codemirror/lang-json";
 import { javascript } from "@codemirror/lang-javascript";
 import { linter, lintGutter } from "@codemirror/lint";
 import { EditorView } from "@codemirror/view";
 import { StateEffect } from "@codemirror/state";
 import {
-  foldAll,
-  unfoldCode,
-  toggleFold,
-  foldCode,
-  foldInside,
   foldable,
   foldEffect,
   foldState,
@@ -102,9 +86,7 @@ import {
 } from "@codemirror/language";
 import {
   NodysseusRuntime,
-  VarNode,
   AnyNode,
-  isNothing,
   NodeOutputsU,
   UnwrapNode,
 } from "src/dependency-tree/dependency-tree.js";
@@ -125,7 +107,7 @@ function maybeEnable(state, other) {
 }
 
 const customFoldAll = (view) => {
-  let { state } = view,
+  const { state } = view,
     effects = [];
   for (let pos = 2; pos < state.doc.length; ) {
     const line = view.lineBlockAt(pos),
@@ -158,7 +140,7 @@ export const pzobj: {
     payload: Pick<
       HyperappState,
       "node_el_width" | "dimensions" | "html_id" | "simulation" | "nodeOffset"
-    > & { node_id: string; prevent_dispatch?: boolean },
+    > & { node_id: string; prevent_dispatch?: boolean }
   ) {
     requestAnimationFrame(() => {
       if (!hlib.panzoom.instance || !payload.node_id) {
@@ -174,14 +156,14 @@ export const pzobj: {
         payload.node_id,
         payload.node_el_width,
         payload.html_id,
-        payload.dimensions,
+        payload.dimensions
       );
       const x = payload.dimensions.x * 0.5 - viewbox.center.x;
       const y = payload.dimensions.y * 0.5 - viewbox.center.y;
       const scale = hlib.panzoom.instance.getTransform().scale;
       hlib.panzoom.instance.moveTo(
         x - (payload.simulation?.selectedOffset?.x ?? 0) * scale,
-        y - (payload?.simulation?.selectedOffset?.y ?? 0) * scale,
+        y - (payload?.simulation?.selectedOffset?.y ?? 0) * scale
       );
       hlib.panzoom.instance.zoomTo(x, y, 1 / scale);
 
@@ -197,7 +179,7 @@ export const pzobj: {
         }
         pzobj.animationframe = requestAnimationFrame(() => {
           pzobj.animationframe = false;
-          dispatch((s, p) => [
+          dispatch((s, _p) => [
             { ...s, show_all: false },
             [
               () =>
@@ -205,8 +187,8 @@ export const pzobj: {
                   nolib.no.runtime.publish(
                     "show_all",
                     { data: false },
-                    nolibLib,
-                  ),
+                    nolibLib
+                  )
                 ),
             ],
           ]);
@@ -289,7 +271,7 @@ export const pzobj: {
           (hlib.panzoom.instance as pz.PanZoom).zoomTo(
             currentEvent.offset.x,
             currentEvent.offset.y,
-            scaleMultiplier,
+            scaleMultiplier
           );
         } else {
           currentEvent = false;
@@ -297,21 +279,21 @@ export const pzobj: {
       });
       (
         document.getElementById(sub_payload.id) as unknown as SVGElement
-      ).ownerSVGElement.addEventListener("pointerup", (e) => {
+      ).ownerSVGElement.addEventListener("pointerup", () => {
         currentEvent = false;
       });
       hlib.panzoom.instance.moveTo(
         window.innerWidth * 0,
-        window.innerHeight * 0.5,
+        window.innerHeight * 0.5
       );
-      hlib.panzoom.instance.on("transform", (e) => {
+      hlib.panzoom.instance.on("transform", () => {
         document
           .getElementById("node-editor-editor")
           .style.setProperty(
             "--zoom-scale",
             (hlib.panzoom.instance as pz.PanZoom)
               .getTransform()
-              .scale.toString(),
+              .scale.toString()
           );
       });
     });
@@ -331,7 +313,7 @@ export const isNodysseusError = (e: Error) =>
 export const update_graph_list = (graph_id) => {
   const graph_list =
     JSON.parse(localStorage.getItem("graph_list"))?.filter(
-      (l) => l !== graph_id,
+      (l) => l !== graph_id
     ) ?? [];
   graph_list.unshift(graph_id);
   localStorage.setItem("graph_list", JSON.stringify(graph_list));
@@ -352,8 +334,8 @@ export const setRootNodeXNodeY = ({
         position.x +
           pzobj.centered.position.x -
           pzobj.centered.initialOffset.x +
-          simulation.selectedOffset.x,
-      )}px`,
+          simulation.selectedOffset.x
+      )}px`
     );
     rt.style.setProperty(
       "--nodey",
@@ -362,15 +344,15 @@ export const setRootNodeXNodeY = ({
           pzobj.centered.position.y -
           pzobj.centered.initialOffset.y +
           simulation.selectedOffset.y +
-          64,
-      )}px`,
+          64
+      )}px`
     );
   }
 };
 
 export const SetSelectedPositionStyleEffect = (
   _,
-  payload: NodePositionArgs,
+  payload: NodePositionArgs
 ) => {
   requestAnimationFrame(() => setRootNodeXNodeY(payload));
 };
@@ -380,11 +362,11 @@ export const ChangeEditingGraphId: ha.Effecter<
   { id: string; select_out: boolean; editingGraphId: string }
 > = (dispatch, { id, select_out, editingGraphId }) => {
   requestAnimationFrame(() => {
-    const graphPromise = wrapPromise(nolib.no.runtime.refs()).then((refs) =>
+    const graphPromise = wrapPromise(nolib.no.runtime.refs()).then((_refs) =>
       nolib.no.runtime.get_ref(
         id,
-        editingGraphId && nolib.no.runtime.get_ref(editingGraphId),
-      ),
+        editingGraphId && nolib.no.runtime.get_ref(editingGraphId)
+      )
     );
 
     window.location.hash = "#" + id;
@@ -406,7 +388,7 @@ export const ChangeEditingGraphId: ha.Effecter<
                     ...acc,
                     [edge.to]: { ...(acc[edge.to] ?? {}), [edge.from]: edge },
                   }),
-                  {},
+                  {}
                 );
               }
 
@@ -419,7 +401,9 @@ export const ChangeEditingGraphId: ha.Effecter<
                   selected: [new_graph.out],
                   editingGraphId: new_graph.id,
                   displayGraph: s.displayGraph ?? false,
-                  displayGraphId: s.displayGraph ? s.displayGraph.id : false as string | false,
+                  displayGraphId: s.displayGraph
+                    ? s.displayGraph.id
+                    : (false as string | false),
                 };
                 return [
                   news,
@@ -434,14 +418,17 @@ export const ChangeEditingGraphId: ha.Effecter<
                     },
                     {},
                   ],
-                  !state.displayGraphId && [refresh_graph_display, { ...state, graph: new_graph }],
+                  !state.displayGraphId && [
+                    refresh_graph_display,
+                    { ...state, graph: new_graph },
+                  ],
                 ];
               });
             });
           },
           {},
         ],
-      ]),
+      ])
     );
   });
 };
@@ -472,7 +459,7 @@ export const CreateNode: ha.Action<
         lib: hlibLib,
       })
       .then(() =>
-        requestAnimationFrame(() => dispatch(SelectNode, { node_id: node.id })),
+        requestAnimationFrame(() => dispatch(SelectNode, { node_id: node.id }))
       );
   },
 ];
@@ -487,7 +474,7 @@ export const DeleteNode = (state, { node_id }) => [
   [
     () =>
       requestAnimationFrame(() =>
-        nolib.no.runtime.delete_node(state.editingGraph, node_id, hlibLib),
+        nolib.no.runtime.delete_node(state.editingGraph, node_id, hlibLib)
       ),
   ],
 ];
@@ -514,7 +501,7 @@ export const ExpandContract = (state, { node_id }) => {
 export const CreateRef = (state, { node }) => [
   state,
   [
-    (dispatch) => {
+    (_dispatch) => {
       const graph = { ...base_graph(node), id: node.name, value: undefined };
       nolib.no.runtime.change_graph(base_graph(graph), hlibLib);
       save_graph(graph);
@@ -526,7 +513,7 @@ export const CreateRef = (state, { node }) => [
           ref: node.name,
           name: undefined,
         },
-        hlibLib,
+        hlibLib
       );
     },
   ],
@@ -543,7 +530,7 @@ export const Copy = (state, { cut, as }) => {
       [],
       Object.values(copied.graph.edges),
       Object.values(graph.nodes),
-      hlibLib,
+      hlibLib
     );
     const outEdge = state.editingGraph.edges[state.selected[0]];
     return [{ ...state, copied }, [selectNodeEffect, { node_id: outEdge.to }]];
@@ -571,7 +558,7 @@ export const Paste = (state) => [
               id:
                 ((node_id_map[n.id] = create_randid(state.editingGraph)),
                 node_id_map[n.id]),
-            }),
+            })
           ),
           Object.values(copied.graph.edges as Array<Edge>)
             .map((e) => ({
@@ -588,7 +575,7 @@ export const Paste = (state) => [
             ]),
           [],
           [],
-          hlibLib,
+          hlibLib
         );
         // Object.values(state.copied.graph.nodes).forEach((n: NodysseusNode) => {
         //     const new_id = create_randid();
@@ -607,7 +594,7 @@ export const Paste = (state) => [
           dispatch(SelectNode, {
             node_id: node_id_map[state.copied.root],
             focus_property: "edge",
-          }),
+          })
         );
       });
     },
@@ -663,8 +650,8 @@ export const SelectNode: ha.Action<
                 "codeEditorExtensions",
                 "cachedMetadata",
               ],
-              { id: node_id },
-            ),
+              { id: node_id }
+            )
           ),
         ],
         focus_property && [
@@ -672,12 +659,12 @@ export const SelectNode: ha.Action<
           { selector: `.node-info .${focus_property}` },
         ],
         getNodes(state.simulation).find(
-          (n) => isd3NodeNode(n) && n.node_id === node_id,
+          (n) => isd3NodeNode(n) && n.node_id === node_id
         ) && [
           SetSelectedPositionStyleEffect,
           {
             position: getNodes(state.simulation).find(
-              (n) => isd3NodeNode(n) && n.node_id === node_id,
+              (n) => isd3NodeNode(n) && n.node_id === node_id
             ),
             nodeOffset: state.nodeOffset,
             dimensions: state.dimensions,
@@ -749,7 +736,7 @@ export const SelectNode: ha.Action<
             nolib.no.runtime.publish(
               "nodeselect",
               { data: { nodeId: node_id, graphId: state.editingGraphId } },
-              nolibLib,
+              nolibLib
             ),
           {},
         ],
@@ -771,7 +758,7 @@ export const CustomDOMEvent = (_, payload) =>
 
 export const FocusEffect: ha.Effecter<HyperappState, { selector: string }> = (
   _,
-  { selector },
+  { selector }
 ) => {
   setTimeout(() => {
     const el: HTMLInputElement = document.querySelector(selector);
@@ -802,7 +789,7 @@ export const UpdateNodeMetadata: ha.Effecter<
   { editingGraph: Graph; node: NodysseusNode }
 > = (dispatch, { editingGraph, node }) =>
   wrapPromise(
-    hlib.run(hlib.infoRuntime(), editingGraph, node.id, "metadata"),
+    hlib.run(hlib.infoRuntime(), editingGraph, node.id, "metadata")
   ).then((metadata) =>
     dispatch((s) => [
       {
@@ -818,7 +805,7 @@ export const UpdateNodeMetadata: ha.Effecter<
           cachedMetadata: { ...s.cachedMetadata, [node.id]: metadata },
         },
       ],
-    ]),
+    ])
   ).value;
 
 export const UpdateNodeEffect: ha.Effecter<
@@ -836,7 +823,7 @@ export const UpdateNodeEffect: ha.Effecter<
         if (edges_in.length === 1) {
           if (
             nodeargs.nodeArgs.filter(
-              (na) => !na.additionalArg && !na.name.startsWith("_"),
+              (na) => !na.additionalArg && !na.name.startsWith("_")
             ).length === 1
           ) {
             const newAs = nodeargs.nodeArgs.find((a) => !a.additionalArg).name;
@@ -882,8 +869,8 @@ export const UpdateNodeEffect: ha.Effecter<
                 "codeEditorExtensions",
                 "cachedMetadata",
               ],
-              { id: node.id },
-            ),
+              { id: node.id }
+            )
           ),
         ],
       ]);
@@ -908,12 +895,12 @@ export const UpdateNode: ha.Action<
               typeof node === "string"
                 ? (editingGraph ?? state.editingGraph).nodes[node]
                 : node
-                  ? node
-                  : state.editingGraph.nodes[state.selected[0]],
+                ? node
+                : state.editingGraph.nodes[state.selected[0]]
             ),
-            { [property]: value === "" ? undefined : value },
-          ),
-        ).filter((kv) => kv[1] !== undefined),
+            { [property]: value === "" ? undefined : value }
+          )
+        ).filter((kv) => kv[1] !== undefined)
       ),
     },
   ],
@@ -955,22 +942,18 @@ export const refresh_graph_display: ha.Effecter<HyperappState, any> = async (
   dispatch,
   {
     graph,
-    graphChanged,
-    norun,
+
     result_display_dispatch,
     result_background_display_dispatch,
-    info_display_dispatch,
-    code_editor,
-    code_editor_nodeid,
-  },
+  }
 ) => {
   selectedGraphOutputs(graph, (display) => {
     result_display_dispatch(UpdateResultDisplay, {
       el: display?.resultPanel
         ? display.resultPanel
         : display?.dom_type
-          ? display
-          : { dom_type: "div", props: {}, children: [] },
+        ? display
+        : { dom_type: "div", props: {}, children: [] },
     });
     result_background_display_dispatch({
       el: display?.background
@@ -982,7 +965,7 @@ export const refresh_graph_display: ha.Effecter<HyperappState, any> = async (
 
 export const result_subscription = (
   dispatch,
-  { editingGraphId, displayGraphId, norun },
+  { editingGraphId, displayGraphId, _norun }
 ) => {
   let animrun: false | number = false;
 
@@ -1000,18 +983,18 @@ export const result_subscription = (
                         ? e.cause?.node_id?.split("/")[1]
                         : uuid(),
                       e,
-                    ]),
+                    ])
                 ).values(),
               ]
             : [error],
-        }),
+        })
       );
     });
 
   nolib.no.runtime.addListener(
     "grapherror",
     "update_hyperapp_error",
-    error_listener,
+    error_listener
   );
 
   let info_display_dispatch,
@@ -1038,7 +1021,7 @@ export const result_subscription = (
       animrun = requestAnimationFrame(() => {
         if (graph?.id === (displayGraphId || editingGraphId)) {
           wrapPromise(
-            nolib.no.runtime.get_ref(displayGraphId || editingGraphId),
+            nolib.no.runtime.get_ref(displayGraphId || editingGraphId)
           ).then((graph) => {
             dispatch((s) => ({
               ...s,
@@ -1074,22 +1057,22 @@ export const result_subscription = (
   nolib.no.runtime.addListener(
     "graphupdate",
     "clear_hyperapp_error",
-    change_listener,
+    change_listener
   );
   const timeouts: Record<
     string,
     false | { id: ReturnType<typeof setTimeout>; timestamp: number }
   > = {};
-  const animframes = {};
+  // const animframes = {};
 
   const noderun_listener = (data) => {
     if (data.graphId === editingGraphId) {
       const nodeId = data.nodeId;
       const timeout = timeouts[nodeId];
-      const nodeanimframe = animframes[nodeId];
+      // const nodeanimframe = animframes[nodeId];
       if (!timeout) {
         const el = document.querySelector(
-          `#node-editor-${nodeId.replaceAll("/", "_")} .shape`,
+          `#node-editor-${nodeId.replaceAll("/", "_")} .shape`
         );
         el?.classList.add("flash");
       }
@@ -1101,7 +1084,7 @@ export const result_subscription = (
         timeouts[nodeId] = {
           id: setTimeout(() => {
             const el = document.querySelector(
-              `#node-editor-${nodeId.replaceAll("/", "_")} .shape`,
+              `#node-editor-${nodeId.replaceAll("/", "_")} .shape`
             );
             timeouts[nodeId] = false;
             el?.classList.remove("flash");
@@ -1115,7 +1098,7 @@ export const result_subscription = (
   nolib.no.runtime.addListener(
     "noderun",
     "update_hyperapp_error",
-    noderun_listener,
+    noderun_listener
   );
 
   return () => (
@@ -1126,15 +1109,15 @@ export const result_subscription = (
 
 export const graph_subscription = (
   dispatch: ha.Dispatch<HyperappState>,
-  props,
+  props
 ) => {
   let animframe: false | number = false;
   const listener = ({ graph }) => {
     dispatch((s) => (s.error ? Object.assign({}, s, { error: false }) : s));
     wrapPromise(nolib.no.runtime.refs()).then((refGraphs) =>
       dispatch((s) =>
-        s.refGraphs.length !== refGraphs.length ? { ...s, refGraphs } : s,
-      ),
+        s.refGraphs.length !== refGraphs.length ? { ...s, refGraphs } : s
+      )
     );
     if (props.editingGraphId === graph.id) {
       if (animframe) {
@@ -1161,7 +1144,7 @@ export const graph_subscription = (
     nolib.no.runtime.removeListener("graphchange", "update_hyperapp");
 };
 
-export const select_node_subscription = (dispatch, props) => {
+export const select_node_subscription = (dispatch, _props) => {
   const listener = (data) => {
     dispatch(SelectNode, {
       node_id: data.data.substring(data.data.indexOf("/") + 1),
@@ -1190,7 +1173,7 @@ export const UpdateSelectedNodeMetadataEffect = (
     code_editor_nodeid: StateEffectType<string>;
     code_editor_nodeid_field: StateField<string>;
     codeEditorExtensions: Compartment;
-  },
+  }
 ) => {
   wrapPromise(runtime.runGraphNode<UnwrapNode<NodeOutputsU>>(graph, id))
     .then((nodeOutputs) => runtime.run(nodeOutputs.metadata))
@@ -1257,19 +1240,19 @@ export const setCodeEditorText = ({
             metadata?.codeEditor?.language === "json"
               ? [jsonlang, linter(jsonParseLinter()), lintGutter()]
               : metadata?.codeEditor?.language === "markdown"
-                ? markdown()
-                : javascript(),
+              ? markdown()
+              : javascript(),
             metadata?.codeEditor?.onChange &&
               EditorView.updateListener.of(
                 (viewUpdate) =>
                   viewUpdate.docChanged &&
                   metadata.codeEditor.onChange({
                     editorText: viewUpdate.state.doc.toString(),
-                  }),
+                  })
               ),
           ]
             .filter((e) => e)
-            .flat(),
+            .flat()
         ),
       ].filter((e) => e),
     });
@@ -1279,7 +1262,7 @@ export const setCodeEditorText = ({
 export const watchNode = async <T>(
   runtime: NodysseusRuntime,
   node: AnyNode<T>,
-  fn: (t: T) => void,
+  fn: (t: T) => void
 ): Promise<void> => {
   for await (const result of runtime.createWatch(node)) {
     fn(result);
@@ -1288,11 +1271,11 @@ export const watchNode = async <T>(
 
 export const selectedGraphOutputs = (
   graph: Graph,
-  displayFn: (d: any) => void,
+  displayFn: (d: any) => void
 ) => {
   watchNodeOutputs(hlib.runtime(), graph.id, graph.out ?? "out", "graphWatch", {
     display: displayFn,
-    value: (value) => {},
+    value: (_value) => {},
   });
 };
 
@@ -1301,7 +1284,7 @@ export const watchNodeOutputs = (
   graph: string,
   selected: string,
   watchId: string,
-  fns: Partial<Record<"display" | "metadata" | "value", (v: any) => void>>,
+  fns: Partial<Record<"display" | "metadata" | "value", (v: any) => void>>
 ) => {
   const nodeId = "selectedVarNode-" + watchId;
   if (!runtime.scope.has(`selectedVarNode-${nodeId}`)) {
@@ -1309,19 +1292,19 @@ export const watchNodeOutputs = (
       { graph, id: selected },
       undefined,
       nodeId,
-      true,
+      true
     );
     const selectedNode = runtime.runNodeNode(
       runtime.bindNode(
         { selectedVarNode },
         ({ selectedVarNode }) =>
           wrapPromise(
-            runtime.fromNode(selectedVarNode.graph, selectedVarNode.id),
+            runtime.fromNode(selectedVarNode.graph, selectedVarNode.id)
           ).then((node) => node).value,
         undefined,
-        nodeId + "-bindGraphNode",
+        nodeId + "-bindGraphNode"
       ),
-      nodeId + "-mapBoundGraphNode",
+      nodeId + "-mapBoundGraphNode"
     );
 
     if (fns.display) {
@@ -1331,9 +1314,9 @@ export const watchNodeOutputs = (
           selectedNode,
           "display",
           nodeId + "-displayOutput",
-          true,
+          true
         ),
-        fns.display,
+        fns.display
       );
     }
     if (fns.metadata) {
@@ -1343,16 +1326,16 @@ export const watchNodeOutputs = (
           selectedNode,
           "metadata",
           nodeId + "-metadataOutput",
-          true,
+          true
         ),
-        fns.metadata,
+        fns.metadata
       );
     }
     if (fns.value) {
       watchNode(
         runtime,
         runtime.accessor(selectedNode, "value", nodeId + "-valueOutput", true),
-        fns.value,
+        fns.value
       );
     }
   } else {
@@ -1367,13 +1350,13 @@ export const infoWindowSubscription = (
     graph,
     // selectedVarNode,
     info_display_dispatch,
-    code_editor,
-    code_editor_nodeid,
-    code_editor_nodeid_field,
-    codeEditorExtensions,
-    cachedMetadata,
-    norun,
-  }: {
+  }: // code_editor,
+  // code_editor_nodeid,
+  // code_editor_nodeid_field,
+  // codeEditorExtensions,
+  // cachedMetadata,
+  // norun,
+  {
     selected: Array<string>;
     graph: string;
     // selectedVarNode: VarNode<{graph: string, id: string}> | undefined,
@@ -1384,7 +1367,7 @@ export const infoWindowSubscription = (
     codeEditorExtensions;
     cachedMetadata: Record<string, NodeMetadata>;
     norun: boolean;
-  },
+  }
 ) => {
   if (info_display_dispatch) {
     watchNodeOutputs(hlib.infoRuntime(), graph, selected[0], "nodeWatch", {
@@ -1393,21 +1376,20 @@ export const infoWindowSubscription = (
           el: display?.dom_type
             ? display
             : display?.resultPanel?.dom_type
-              ? display.resultPanel
-              : {
-                  dom_type: "div",
-                  props: {},
-                  children: [
-                    {
-                      dom_type: "text_value",
-                      text:
-                        typeof display === "number" ||
-                        typeof display === "string"
-                          ? display
-                          : "",
-                    },
-                  ],
-                },
+            ? display.resultPanel
+            : {
+                dom_type: "div",
+                props: {},
+                children: [
+                  {
+                    dom_type: "text_value",
+                    text:
+                      typeof display === "number" || typeof display === "string"
+                        ? display
+                        : "",
+                  },
+                ],
+              },
         }),
     });
   }
@@ -1434,17 +1416,17 @@ export const findViewBox = (
   selected: string,
   node_el_width: number,
   htmlid: string,
-  dimensions: { x: number; y: number },
+  dimensions: { x: number; y: number }
 ) => {
   const visible_nodes: Array<{ x: number; y: number }> = [];
   const visible_node_set = new Set();
   let selected_pos: Vector2;
   links.forEach((l) => {
     const el = document.getElementById(
-      `link-${(l.source as d3NodeNode).node_id}`,
+      `link-${(l.source as d3NodeNode).node_id}`
     );
     const info_el = document.getElementById(
-      `edge-info-${(l.source as d3NodeNode).node_id}`,
+      `edge-info-${(l.source as d3NodeNode).node_id}`
     );
     if (el && info_el && l.source && l.target) {
       const source = {
@@ -1495,7 +1477,7 @@ export const findViewBox = (
   const nodes_box = visible_nodes.reduce(
     (
       acc: { min: { x: number; y: number }; max: { x: number; y: number } },
-      n,
+      n
     ) => ({
       min: {
         x: Math.min(acc.min.x, n.x - 24),
@@ -1515,7 +1497,7 @@ export const findViewBox = (
         x: selected_pos ? selected_pos.x + 96 : -dimensions.x,
         y: selected_pos ? selected_pos.y + 128 : -dimensions.y,
       },
-    },
+    }
   );
   const nodes_box_center = {
     x: (nodes_box.max.x + nodes_box.min.x) * 0.5,
@@ -1524,11 +1506,11 @@ export const findViewBox = (
   const nodes_box_dimensions = {
     x: Math.max(
       dimensions.x * 0.5,
-      Math.min(dimensions.x, nodes_box.max.x - nodes_box.min.x),
+      Math.min(dimensions.x, nodes_box.max.x - nodes_box.min.x)
     ),
     y: Math.max(
       dimensions.y * 0.5,
-      Math.min(dimensions.y, nodes_box.max.y - nodes_box.min.y),
+      Math.min(dimensions.y, nodes_box.max.y - nodes_box.min.y)
     ),
   };
   const center = !selected_pos
@@ -1555,7 +1537,7 @@ export const calculateLevels = (
   nodes: Array<d3NodeNode>,
   links: Array<d3Link>,
   graph: Graph,
-  selected: string,
+  selected: string
 ): Levels => {
   const find_childest = (n) => {
     const e = graphEdgeOut(graph, n);
@@ -1570,7 +1552,7 @@ export const calculateLevels = (
 
   const levels = new Map();
   bfs(graph, (id, level) =>
-    levels.set(id, Math.min(levels.get(id) || Number.MAX_SAFE_INTEGER, level)),
+    levels.set(id, Math.min(levels.get(id) || Number.MAX_SAFE_INTEGER, level))
   )(top, 0);
 
   const parents = new Map(
@@ -1580,14 +1562,14 @@ export const calculateLevels = (
         .filter((l) =>
           typeof l.target == "object"
             ? (l.target as d3NodeNode).node_id === n.node_id
-            : l.target === n.node_id,
+            : l.target === n.node_id
         )
         .map((l) =>
           typeof l.source === "object"
             ? (l.source as d3NodeNode).node_id
-            : String(l.source),
+            : String(l.source)
         ),
-    ]),
+    ])
   );
 
   [...parents.values()].forEach((nps) => {
@@ -1610,14 +1592,14 @@ export const calculateLevels = (
           (l) =>
             (typeof l.source === "object"
               ? (l.source as d3NodeNode).node_id
-              : l.source) === n.node_id,
+              : l.source) === n.node_id
         )
         .map((l) =>
           typeof l.target === "object"
             ? (l.target as d3NodeNode).node_id
-            : String(l.target),
+            : String(l.target)
         ),
-    ]),
+    ])
   );
   const siblings = new Map(
     nodes.map((n) => [
@@ -1626,10 +1608,10 @@ export const calculateLevels = (
         ...new Set(
           children.has(n.node_id)
             ? children.get(n.node_id).flatMap((c) => parents.get(c) || [])
-            : [],
+            : []
         ).values(),
       ],
-    ]),
+    ])
   );
   const distance_from_selected = new Map();
 
@@ -1664,7 +1646,7 @@ export const calculateLevels = (
     max: Math.max(...levels.values()),
     nodes_by_level: [...levels.entries()].reduce(
       (acc, [n, l]) => (acc[l] ? acc[l].push(n) : (acc[l] = [n]), acc),
-      {},
+      {}
     ),
   };
 };
@@ -1707,14 +1689,14 @@ export const CalculateSelectedNodeArgsEffect: ha.Effecter<
         ...s,
         selectedNodeArgs: nodeArgs.nodeArgs,
         selectedNodeEdgeLabels: nodeArgs.nodeOutArgs?.map((a) => a.name) ?? [],
-      })),
+      }))
   ).value;
 
 export const node_args = (
   nolib: Record<string, any>,
   graph: Graph,
   node_id: string,
-  cachedMetadata: Record<string, NodeMetadata> = {},
+  cachedMetadata: Record<string, NodeMetadata> = {}
 ):
   | { nodeArgs: Array<NodeArg>; nodeOutArgs?: Array<NodeArg> }
   | Promise<{ nodeArgs: Array<NodeArg>; nodeOutArgs?: Array<NodeArg> }> => {
@@ -1736,10 +1718,10 @@ export const node_args = (
       .then(
         (metadata) =>
           wrapPromise(
-            edge_out && node_args(nolib, graph, edge_out.to, cachedMetadata),
+            edge_out && node_args(nolib, graph, edge_out.to, cachedMetadata)
           ).then((nodeOutNodeArgs) => {
             const nodeOutNodeArg = nodeOutNodeArgs?.nodeArgs.find(
-              (a) => a.name === edge_out.as,
+              (a) => a.name === edge_out.as
             );
             const node_out_args: Array<[string, string | FullyTypedArg]> =
               node_out?.ref === "@flow.runnable"
@@ -1749,19 +1731,19 @@ export const node_args = (
                     .map((a) =>
                       a.value?.includes(".")
                         ? a.value?.substring(0, a.value?.indexOf("."))
-                        : a.value,
+                        : a.value
                     )
                     .map((a) => [a, "any"])
                 : nodeOutNodeArg?.type &&
-                    typeof nodeOutNodeArg.type === "object"
-                  ? Object.entries(nodeOutNodeArg.type).map<
-                      [string, string | FullyTypedArg]
-                    >((e) =>
-                      typeof e[1] === "function"
-                        ? [e[0], e[1](graph, edge_out.to)]
-                        : (e as [string, string | FullyTypedArg]),
-                    )
-                  : undefined;
+                  typeof nodeOutNodeArg.type === "object"
+                ? Object.entries(nodeOutNodeArg.type).map<
+                    [string, string | FullyTypedArg]
+                  >((e) =>
+                    typeof e[1] === "function"
+                      ? [e[0], e[1](graph, edge_out.to)]
+                      : (e as [string, string | FullyTypedArg])
+                  )
+                : undefined;
 
             // const argslist_path = node_ref?.nodes && nolib.no.runtime.get_path(node_ref, "argslist");
 
@@ -1772,7 +1754,7 @@ export const node_args = (
                   ?.filter(
                     (l) =>
                       l.as?.startsWith("arg") &&
-                      new RegExp("[0-9]+").test(l.as.substring(3)),
+                      new RegExp("[0-9]+").test(l.as.substring(3))
                   )
                   .map((l) => parseInt(l.as.substring(3))) ?? []
               ).reduce((acc, i) => (acc > i ? acc : i + 1), 0);
@@ -1793,20 +1775,19 @@ export const node_args = (
                     ];
                   })
                 : externfn?.args && typeof externfn.args === "object"
-                  ? Object.entries(externfn.args)
-                  : []);
+                ? Object.entries(externfn.args)
+                : []);
             const baseargs: Array<[string, TypedArg]> = externfn
               ? externArgs
                 ? externArgs
                 : ["args"]
               : isNodeGraph(node_ref)
-                ? Object.values(node_ref?.nodes)
-                    .filter(isNodeRef)
-                    .filter((n) => n.ref === "arg")
-                    .map<[string, TypedArg]>((n) => parseTypedArg(n.value))
-                    .filter((a) => typeof a[1] === "string" || !a[1].local) ??
-                  []
-                : [];
+              ? Object.values(node_ref?.nodes)
+                  .filter(isNodeRef)
+                  .filter((n) => n.ref === "arg")
+                  .map<[string, TypedArg]>((n) => parseTypedArg(n.value))
+                  .filter((a) => typeof a[1] === "string" || !a[1].local) ?? []
+              : [];
 
             const scriptVarNames =
               node.ref === "@js.script" && new Set<string>();
@@ -1816,33 +1797,43 @@ export const node_args = (
               parser.parse(node.value).iterate({
                 enter: (syntaxNode) =>
                   syntaxNode.name === "VariableName" &&
-                  !window[node.value.substring(syntaxNode.from, syntaxNode.to)]
-                    && node.value.substring(syntaxNode.from, syntaxNode.from + 1) !== "_"
+                  !window[
+                    node.value.substring(syntaxNode.from, syntaxNode.to)
+                  ] &&
+                  node.value.substring(syntaxNode.from, syntaxNode.from + 1) !==
+                    "_"
                     ? !!scriptVarNames.add(
-                        node.value.substring(syntaxNode.from, syntaxNode.to),
+                        node.value.substring(syntaxNode.from, syntaxNode.to)
                       )
                     : syntaxNode.name === "VariableDeclaration"
-                      ? syntaxNode.node.getChild("VariableDefinition")
-                          ? !!scriptVarDecs.add(
-                              node.value.substring(
-                                syntaxNode.node.getChild("VariableDefinition").from,
-                                syntaxNode.node.getChild("VariableDefinition").to,
-                              ),
-                            )
-                        : syntaxNode.node.getChild("ObjectPattern")?.getChild("PatternProperty")
-                          ? syntaxNode.node.getChild("ObjectPattern")?.getChildren("PatternProperty").forEach(n => {
+                    ? syntaxNode.node.getChild("VariableDefinition")
+                      ? !!scriptVarDecs.add(
+                          node.value.substring(
+                            syntaxNode.node.getChild("VariableDefinition").from,
+                            syntaxNode.node.getChild("VariableDefinition").to
+                          )
+                        )
+                      : syntaxNode.node
+                          .getChild("ObjectPattern")
+                          ?.getChild("PatternProperty")
+                      ? syntaxNode.node
+                          .getChild("ObjectPattern")
+                          ?.getChildren("PatternProperty")
+                          .forEach((n) => {
                             const nameNode = n.getChild("PropertyName");
-                            scriptVarDecs.add(node.value.substring(nameNode.from, nameNode.to));
-                        })
-                          : undefined
-                      : undefined,
+                            scriptVarDecs.add(
+                              node.value.substring(nameNode.from, nameNode.to)
+                            );
+                          })
+                      : undefined
+                    : undefined,
               });
               scriptVarDecs.forEach((dec) => scriptVarNames.delete(dec));
             }
 
             if (metadata?.parameters) {
               Object.entries(metadata.parameters).forEach((pe) =>
-                baseargs.push([pe[0], isTypedArg(pe[1]) ? pe[1] : "any"]),
+                baseargs.push([pe[0], isTypedArg(pe[1]) ? pe[1] : "any"])
               );
             }
 
@@ -1858,7 +1849,7 @@ export const node_args = (
                 .concat(baseargs)
                 .filter(
                   (a: [string, TypedArg]) =>
-                    !a[0].includes(".") && !a[0].startsWith("_"),
+                    !a[0].includes(".") && !a[0].startsWith("_")
                 )
                 .concat(
                   (externArgs &&
@@ -1866,14 +1857,14 @@ export const node_args = (
                     baseargs.map((a) => a[0]).includes("_args") ||
                     (node.ref === undefined && !node.value)
                     ? [[nextIndexedArg, { type: "any", additionalArg: true }]]
-                    : [],
+                    : []
                 )
                 .concat(node_out_args ? node_out_args : [])
                 .concat(
                   scriptVarNames
                     ? [...scriptVarNames].map((n) => [n, "any"])
-                    : [],
-                ),
+                    : []
+                )
             );
 
             return {
@@ -1884,14 +1875,14 @@ export const node_args = (
               })),
               nodeOutArgs: nodeOutNodeArgs?.nodeArgs,
             };
-          }).value,
+          }).value
       ).value
   );
 };
 
 export const save_graph = (graph) => {
   graph = base_graph(graph);
-  const graphstr = JSON.stringify(base_graph(graph));
+  // const graphstr = JSON.stringify(base_graph(graph));
   // localStorage.setItem(graph.id, graphstr);
   nolib.no.runtime.add_ref(graph);
 };
@@ -1916,7 +1907,7 @@ export const HTMLComponent = ({
   ref,
 }: {
   dom_type: string;
-  props: {};
+  props: object;
   children: Array<any>;
   text?: string;
   ref?: (ref: { ref: HTMLElement }) => void;
@@ -1930,9 +1921,9 @@ export const HTMLComponent = ({
             .map((e) =>
               typeof e[1] === "function"
                 ? [e[0], (event) => (e[1] as Function)({ event })]
-                : e,
+                : e
             )
-            .concat(ref ? ["ref", (val) => ref({ ref: val })] : []),
+            .concat(ref ? ["ref", (val) => ref({ ref: val })] : [])
         ),
         children
           ?.map((c) => c.el ?? c)
@@ -1940,8 +1931,8 @@ export const HTMLComponent = ({
           .map((c) =>
             c.dom_type === "text_value"
               ? c.text
-              : createElement(HTMLComponent, c),
-          ) ?? [],
+              : createElement(HTMLComponent, c)
+          ) ?? []
       );
 };
 
@@ -1949,7 +1940,7 @@ export const embeddedHTMLView = (htmlId) => {
   let displayState: {
     el: {
       dom_type: string;
-      props: {};
+      props: object;
       children: Array<any>;
       text?: string;
       lifecycle?: Record<string, Function>;
@@ -2010,7 +2001,7 @@ export const hlibLib = mergeLib(
       }
       try {
         const result = wrapPromise(targetRuntime.runGraphNode(graph, fn)).then(
-          (nodeOutput) => targetRuntime.runNode(nodeOutput[_output ?? "value"]),
+          (nodeOutput) => targetRuntime.runNode(nodeOutput[_output ?? "value"])
         ).value;
         if (ispromise(result)) {
           return result.catch((e) => console.error(e));
@@ -2027,13 +2018,13 @@ export const hlibLib = mergeLib(
         "runtime",
         nodysseusStore,
         hlibLib,
-        autorun ? "graphchange" : "graphchangeready",
+        autorun ? "graphchange" : "graphchangeready"
       );
       infoRuntime = new NodysseusRuntime(
         "infoRuntime",
         nodysseusStore,
         hlibLib,
-        "graphchange",
+        "graphchange"
       );
     },
     d3: {
@@ -2053,11 +2044,11 @@ export const hlibLib = mergeLib(
       args: ["runnable", "args"],
       fn: (
         runnable: { graph: string; fn: string; nodeGraphId: string },
-        args: Record<string, any>,
+        args: Record<string, any>
       ) => {
         return wrapPromise(hlib.worker.current()).then((worker) => {
           const transferableObjects = [...Object.entries(args)].filter(
-            (kv) => kv[1]?.isTransferable,
+            (kv) => kv[1]?.isTransferable
           );
           transferableObjects.forEach((e) => (args[e[0]] = e[1].value));
           return worker.postMessage(
@@ -2072,11 +2063,11 @@ export const hlibLib = mergeLib(
                     e[1]?.__kind === "varNode"
                       ? { __kind: "varNode", id: e[1].id }
                       : e[1],
-                  ]),
+                  ])
                 ),
               },
             },
-            transferableObjects.map((kv) => kv[1].value),
+            transferableObjects.map((kv) => kv[1].value)
           );
         });
       },
@@ -2092,7 +2083,7 @@ export const hlibLib = mergeLib(
           jsx: string,
           graphvalue: string,
           _node_args: Record<string, unknown>,
-          _output: string,
+          _output: string
         ) => {
           const nodes = JsxParser.parse(jsx ?? graphvalue, {
             ecmaVersion: "latest",
@@ -2152,12 +2143,12 @@ export const hlibLib = mergeLib(
                 !argval
                   ? argval
                   : Array.isArray(argval)
-                    ? [...argval]
-                    : typeof argval === "object"
-                      ? { ...argval }
-                      : childrenIdx > propsIdx
-                        ? { dom_type: "text_value", text: `${argval}` }
-                        : argval,
+                  ? [...argval]
+                  : typeof argval === "object"
+                  ? { ...argval }
+                  : childrenIdx > propsIdx
+                  ? { dom_type: "text_value", text: `${argval}` }
+                  : argval
               );
               outputPath.pop();
               return false;
@@ -2193,8 +2184,8 @@ export const hlibLib = mergeLib(
                   Object.fromEntries(
                     styleString
                       .split(";")
-                      .map((v) => v.split(":").map((v) => v.trim())),
-                  ),
+                      .map((v) => v.split(":").map((v) => v.trim()))
+                  )
                 );
               }
             },
@@ -2255,14 +2246,14 @@ export const hlibLib = mergeLib(
               wrapPromise(e[1](justGet(output, e[0]).props)).then((el) =>
                 el
                   ? justSet(output, e[0], el)
-                  : justSet(output, e[0] + ".dom_type", "div"),
-              ),
-            ),
+                  : justSet(output, e[0] + ".dom_type", "div")
+              )
+            )
           ).then(() => output).value;
         },
       },
     },
-  }),
+  })
 );
 
 export const hlib = hlibLib.data;

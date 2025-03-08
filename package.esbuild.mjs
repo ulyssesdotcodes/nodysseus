@@ -1,30 +1,30 @@
-import * as esbuild from 'esbuild'
-import { wasmLoader } from 'esbuild-plugin-wasm';
+import * as esbuild from "esbuild";
+import { wasmLoader } from "esbuild-plugin-wasm";
 import fs from "node:fs";
 
 const result = await esbuild.build({
   entryPoints: [
-    {in: 'src/index.js', out: 'index.bundle'},
-    {in: 'src/worker.js', out: 'worker'},
-    {in: 'src/sharedWorker.ts', out: 'sharedWorker'},
-    {in: 'src/browser-esm.js', out: 'browser-esm'}
+    { in: "src/index.js", out: "index.bundle" },
+    { in: "src/worker.js", out: "worker" },
+    { in: "src/sharedWorker.ts", out: "sharedWorker" },
+    { in: "src/browser-esm.js", out: "browser-esm" },
   ],
   loader: {
-    '.wasm': 'file'
+    ".wasm": "file",
   },
   define: {
-    "window.IS_PRODUCTION": "true"
+    "window.IS_PRODUCTION": "true",
   },
   metafile: true,
   bundle: true,
-  outdir: 'public',
+  outdir: "public",
   plugins: [wasmLoader()],
-  external: ['node:https'],
-  target: 'es2022',
-  format: 'esm',
+  external: ["node:https"],
+  target: "es2022",
+  format: "esm",
   splitting: true,
   minify: true,
-  sourcemap: false
-})
+  sourcemap: false,
+});
 
-fs.writeFileSync('meta.json', JSON.stringify(result.metafile))
+fs.writeFileSync("meta.json", JSON.stringify(result.metafile));

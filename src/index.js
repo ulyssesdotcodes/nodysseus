@@ -1,12 +1,15 @@
-import { editor } from "./editor/editor.ts"
+import { editor } from "./editor/editor.ts";
 
-if (!window.IS_PRODUCTION) new EventSource("/esbuild").addEventListener("change", () => location.reload())
+if (!window.IS_PRODUCTION)
+  new EventSource("/esbuild").addEventListener("change", () =>
+    location.reload()
+  );
 
-if("serviceWorker" in navigator) {
-  console.log("installing serviceworker")
-  navigator.serviceWorker.register("./sw.js")
+if ("serviceWorker" in navigator) {
+  console.log("installing serviceworker");
+  navigator.serviceWorker.register("./sw.js");
 } else {
-  console.log("couldn't install serviceworker")
+  console.log("couldn't install serviceworker");
 }
 
-editor("node-editor")
+editor("node-editor");

@@ -2,7 +2,6 @@ import { initStore, nolibLib } from "./nodysseus.js";
 import { initPort, processMessage, SWState } from "./editor/store.js";
 import { urlRefStore } from "./store.js";
 import { NodysseusRuntime } from "./dependency-tree/dependency-tree.js";
-import { json } from "@codemirror/lang-json";
 import { wrapPromise } from "./util.js";
 import { NodeOutputsU } from "./dependency-tree/dependency-tree.js";
 import { NodeType } from "./dependency-tree/dependency-tree.js";
@@ -34,20 +33,20 @@ Promise.all([
       persist: true,
       graphChangeCallback: (graph) =>
         ports.forEach((p) =>
-          p.postMessage({ kind: "update", graphs: [graph] }),
+          p.postMessage({ kind: "update", graphs: [graph] })
         ),
       run: (g, id) =>
         wrapPromise(runtime.runGraphNode(g, id)).then(
-          (outputs: NodeType<NodeOutputsU>) => runtime.run(outputs.value),
+          (outputs: NodeType<NodeOutputsU>) => runtime.run(outputs.value)
         ).value,
       fallbackRefStore: urlRefStore(examplesUrl),
-    }),
+    })
   ).then((resStore) => {
     store.value = resStore.refs;
     initStore(resStore);
     runtime = new NodysseusRuntime("sharedworker", resStore, nolibLib);
     store.initQueue.forEach((e) =>
-      processMessage(store.value, ports, e[0], e[1]),
+      processMessage(store.value, ports, e[0], e[1])
     );
   });
 });

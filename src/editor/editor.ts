@@ -1,13 +1,4 @@
-import { render, createElement } from "preact";
-import { signal } from "@preact/signals";
-
-import {
-  resfetch,
-  nolib,
-  initStore,
-  NodysseusError,
-  nolibLib,
-} from "../nodysseus.js";
+import { nolib, NodysseusError, nolibLib } from "../nodysseus.js";
 
 import * as ha from "hyperapp";
 import Fuse from "fuse.js";
@@ -41,9 +32,6 @@ import {
   SaveGraph,
   SelectNode,
   select_node_subscription,
-  UpdateNodeEffect,
-  HTMLComponent,
-  HTMLView,
   embeddedHTMLView,
   infoWindowSubscription,
   UpdateNodeMetadata,
@@ -52,7 +40,7 @@ import {
 } from "./util.js";
 import { info_display, infoWindow } from "./components/infoWindow.js";
 import { init_code_editor } from "./components/codeEditor.js";
-import { d3Node, d3NodeNode, HyperappState, Levels } from "./types.js";
+import { d3NodeNode, HyperappState, Levels } from "./types.js";
 import { initPort, sharedWorkerRefStore, webClientStore } from "./store.js";
 import {
   d3subscription,
@@ -78,7 +66,7 @@ const SimulationToHyperapp = (state, payload) => [
       payload.nodes,
       payload.links,
       state.editingGraph,
-      state.selected,
+      state.selected
     ),
     nodes: payload.nodes,
     links: payload.links,
@@ -98,22 +86,22 @@ const Search = (state, { payload, nodes }) => {
   if (payload.key === "Escape") {
     return [
       { ...state, search: false, search_index: 0 },
-      [(dispatch) => (payload.target.value = "")],
+      [() => (payload.target.value = "")],
     ];
   }
 
   const direction = payload.key === "Enter" ? (payload.shiftKey ? -1 : 1) : 0;
-  // @ts-ignore
+  // @ts-expect-error fuze issues
   const search_results = new Fuse<NodysseusNode>(
     nodes.map((n) =>
       Object.assign(
         {},
         n,
         nolib.no.runtime.get_node(state.editingGraph, n.node_id),
-        nolib.no.runtime.get_edge_out(state.editingGraph, n.node_id),
-      ),
+        nolib.no.runtime.get_edge_out(state.editingGraph, n.node_id)
+      )
     ),
-    { keys: ["name", "ref", "value", "as", "id"] },
+    { keys: ["name", "ref", "value", "as", "id"] }
   ).search(payload.target.value);
   const search_index =
     search_results.length > 0
@@ -133,7 +121,7 @@ const Search = (state, { payload, nodes }) => {
         requestAnimationFrame(() =>
           dispatch(SelectNode, {
             node_id: search_results[search_index].item.id,
-          }),
+          })
         ),
     ],
   ];
@@ -155,12 +143,12 @@ const search_el = ({ search }) =>
             searchFocused: false,
             search: (payload.target as HTMLInputElement).value || false,
           }),
-          onfocus: (state: HyperappState, payload) => ({
+          onfocus: (state: HyperappState, _payload) => ({
             ...state,
             searchFocused: true,
           }),
         },
-        [],
+        []
       ),
     typeof search !== "string" &&
       ha.h(
@@ -172,11 +160,11 @@ const search_el = ({ search }) =>
             [FocusEffect, { selector: "#search input" }],
           ],
         },
-        [ha.text("search")],
+        [ha.text("search")]
       ),
   ]);
 
-const show_error = (e, t?) => ({
+const show_error = (e, _t?) => ({
   dom_type: "div",
   props: { class: "errors" },
   children: (Array.isArray(e)
@@ -203,7 +191,7 @@ const show_error = (e, t?) => ({
           },
         ].filter((c) => c),
       },
-    ].filter((c) => c),
+    ].filter((c) => c)
   ),
 });
 
@@ -245,7 +233,7 @@ const refresh_custom_editor = () =>
         .then((graph) => hlib.run(hlib.runtime(), graph, graph.out, "display"))
         .then(
           (result) =>
-            result && custom_editor_display_dispatch(() => ({ el: result })),
+            result && custom_editor_display_dispatch(() => ({ el: result }))
         );
     } else {
       custom_editor_display_dispatch(() => ({
@@ -265,7 +253,7 @@ const defs = () =>
       [
         ha.h("feFlood", { floodColor: "#000a" }),
         ha.h("feComposite", { in: "SourceGraphic", operator: "over" }),
-      ],
+      ]
     ),
     ha.h(
       "marker",
@@ -278,7 +266,7 @@ const defs = () =>
         markerUnits: "userSpaceOnUse",
         orient: "auto",
       },
-      [ha.h("polyline", { points: "1 1, 8 4, 1 8" })],
+      [ha.h("polyline", { points: "1 1, 8 4, 1 8" })]
     ),
   ]);
 
@@ -286,9 +274,9 @@ let result_display_dispatch;
 let result_background_display_dispatch;
 let info_display_dispatch;
 let custom_editor_display_dispatch;
-let code_editor;
-let code_editor_nodeid;
-let code_editor_nodeid_field;
+// let code_editor;
+// let code_editor_nodeid;
+// let code_editor_nodeid_field;
 
 const mutationObserverSubscription = (dispatch, { selector }) => {
   const mutobs = new MutationObserver((obs) =>
@@ -301,7 +289,7 @@ const mutationObserverSubscription = (dispatch, { selector }) => {
                 nolib.no.runtime.publish(
                   "domnodeadded",
                   { id: addedel.id },
-                  nolibLib,
+                  nolibLib
                 );
               }
               for (const child of addedel.children) {
@@ -311,9 +299,9 @@ const mutationObserverSubscription = (dispatch, { selector }) => {
           };
 
           publishel(added);
-        }),
-      ),
-    ),
+        })
+      )
+    )
   );
   const els = document.querySelectorAll(selector);
   els.forEach((el) => mutobs.observe(el, { childList: true, subtree: true }));
@@ -328,8 +316,8 @@ const error_nodes = (error) =>
         .map((e) => (isNodysseusError(e) ? e.cause.node_id : false))
         .filter((n) => n)
     : isNodysseusError(error)
-      ? [error.cause.node_id]
-      : [];
+    ? [error.cause.node_id]
+    : [];
 
 // generated using markdown node and help.md
 const helpmd = run_h({
@@ -393,11 +381,11 @@ const runapp = (init, _lib) => {
           requestAnimationFrame(() => {
             result_display_dispatch = result_display(init.html_id);
             result_background_display_dispatch = result_display(
-              init.html_id + "-background",
+              init.html_id + "-background"
             );
             info_display_dispatch = info_display(init.html_id);
             custom_editor_display_dispatch = custom_editor_display(
-              init.html_id,
+              init.html_id
             );
             dispatch((s) => [
               {
@@ -413,7 +401,7 @@ const runapp = (init, _lib) => {
                     refresh_custom_editor();
                     nolib.no.runtime.change_graph(
                       base_graph(init.editingGraph),
-                      hlibLib,
+                      hlibLib
                     );
                   });
                 },
@@ -437,21 +425,21 @@ const runapp = (init, _lib) => {
             .then(
               (custom_editor_result) =>
                 custom_editor_result &&
-                dispatch((s) => ({ ...s, custom_editor_result })),
+                dispatch((s) => ({ ...s, custom_editor_result }))
             ),
       ],
       [UpdateSimulation, { ...init, action: SimulationToHyperapp }],
       [
         (dispatch) =>
           requestAnimationFrame(() =>
-            dispatch(SelectNode, { node_id: init.selected[0] }),
+            dispatch(SelectNode, { node_id: init.selected[0] })
           ),
       ],
       [init_code_editor, { html_id: init.html_id }],
       [
         (dispatch) =>
           wrapPromise(nolib.no.runtime.ref_graphs()).then((rgs) =>
-            dispatch((s) => ({ ...s, refGraphs: rgs })),
+            dispatch((s) => ({ ...s, refGraphs: rgs }))
           ),
       ],
     ],
@@ -478,27 +466,27 @@ const runapp = (init, _lib) => {
                         link,
                         s.editingGraph.edges[
                           (link.source as d3NodeNode).node_id
-                        ],
+                        ]
                       ),
                       selected_distance:
                         s.show_all || !s.levels
                           ? 0
                           : s.levels.distance_from_selected.get(
-                                (link.source as d3NodeNode).node_id,
-                              ) > 3
-                            ? "far"
-                            : s.levels.distance_from_selected.get(
-                                (link.source as d3NodeNode).node_id,
-                              ),
-                    }),
-                  ) ?? [],
+                              (link.source as d3NodeNode).node_id
+                            ) > 3
+                          ? "far"
+                          : s.levels.distance_from_selected.get(
+                              (link.source as d3NodeNode).node_id
+                            ),
+                    })
+                  ) ?? []
                 )
                 .concat(
                   getNodes(s.simulation).map((node) => {
                     const newnode = Object.assign(
                       {},
                       node,
-                      s.editingGraph.nodes[node.node_id],
+                      s.editingGraph.nodes[node.node_id]
                     );
                     return ha.memo(node_el, {
                       html_id: s.html_id,
@@ -506,15 +494,15 @@ const runapp = (init, _lib) => {
                       error: !!error_nodes(s.error).find(
                         (e) =>
                           e &&
-                          e.startsWith(s.editingGraph.id + "/" + node.node_id),
+                          e.startsWith(s.editingGraph.id + "/" + node.node_id)
                       ),
                       selected_distance:
                         s.show_all || !s.levels
                           ? 0
                           : s.levels.distance_from_selected.get(node.node_id) >
-                              3
-                            ? "far"
-                            : s.levels.distance_from_selected.get(node.node_id),
+                            3
+                          ? "far"
+                          : s.levels.distance_from_selected.get(node.node_id),
                       node_id: node.node_id,
                       node_name: newnode.name,
                       node_ref: isNodeRef(newnode) ? newnode.ref : undefined,
@@ -532,14 +520,14 @@ const runapp = (init, _lib) => {
                       edgeName: s.editingGraph.edges[node.node_id]?.as,
                       isSearchResult: s.searchResults?.includes(node.node_id),
                     });
-                  }) ?? [],
+                  }) ?? []
                 )
                 .concat(
                   getLinks(s.simulation)
                     .filter(
                       (link) =>
                         (link.source as d3NodeNode).node_id == s.selected[0] ||
-                        (link.target as d3NodeNode).node_id === s.selected[0],
+                        (link.target as d3NodeNode).node_id === s.selected[0]
                     )
                     .map((link) =>
                       insert_node_el({
@@ -547,17 +535,17 @@ const runapp = (init, _lib) => {
                         randid: s.randid,
                         node_el_width: s.node_el_width,
                         nodeOffset: s.nodeOffset,
-                      }),
-                    ),
-                ),
+                      })
+                    )
+                )
             ),
-          ],
+          ]
         ),
         ha.memo(infoWindow, {
           node: Object.assign(
             {},
             getNodes(s.simulation).find((n) => n.node_id === s.selected[0]),
-            s.editingGraph.nodes[s.selected[0]],
+            s.editingGraph.nodes[s.selected[0]]
           ),
           hidden: s.show_all,
           initialLayout: s.initialLayout,
@@ -565,9 +553,9 @@ const runapp = (init, _lib) => {
           link_out: Object.assign(
             {},
             getLinks(s.simulation).find(
-              (l) => (l.source as d3NodeNode).node_id === s.selected[0],
+              (l) => (l.source as d3NodeNode).node_id === s.selected[0]
             ),
-            s.editingGraph.edges[s.selected[0]],
+            s.editingGraph.edges[s.selected[0]]
           ),
           editingGraph: s.editingGraph,
           editingGraphId: s.editingGraph.id,
@@ -590,7 +578,7 @@ const runapp = (init, _lib) => {
           ha.h(
             "div",
             { id: "node-editor-error" },
-            s.error && run_h(show_error(s.error)),
+            s.error && run_h(show_error(s.error))
           ),
           ha.h("div", { id: "graph-actions", class: "actions" }, [
             search_el({ search: s.search }),
@@ -608,7 +596,7 @@ const runapp = (init, _lib) => {
                   displayGraphId: s.displayGraphId ? false : s.editingGraphId,
                 }),
               },
-              [ha.text("push_pin")],
+              [ha.text("push_pin")]
             ),
             ha.h(
               "span",
@@ -640,7 +628,7 @@ const runapp = (init, _lib) => {
                   },
                 ],
               },
-              [ha.text(s.norun ? "play_arrow" : "pause")],
+              [ha.text(s.norun ? "play_arrow" : "pause")]
             ),
             s.norun &&
               ha.h(
@@ -649,19 +637,19 @@ const runapp = (init, _lib) => {
                   class: "material-symbols-outlined graph-action",
                   onclick: (s: HyperappState) => [
                     s,
-                    (dispatch) => {
+                    () => {
                       nolib.no.runtime.publish(
                         "graphchangeready",
                         { graph: nolib.no.runtime.get_ref(s.editingGraphId) },
-                        nolibLib,
+                        nolibLib
                       );
                       wrapPromise(
                         hlib.run(
                           hlib.runtime(),
                           s.editingGraph,
                           s.editingGraph.out ?? "out",
-                          "display",
-                        ),
+                          "display"
+                        )
                       ).then((display) => {
                         display &&
                           (!display.background || display.resultPanel) &&
@@ -669,12 +657,12 @@ const runapp = (init, _lib) => {
                             el: display?.resultPanel
                               ? display.resultPanel
                               : display?.dom_type
-                                ? display
-                                : {
-                                    dom_type: "div",
-                                    props: {},
-                                    children: [],
-                                  },
+                              ? display
+                              : {
+                                  dom_type: "div",
+                                  props: {},
+                                  children: [],
+                                },
                           });
                         display &&
                           display.background &&
@@ -694,7 +682,7 @@ const runapp = (init, _lib) => {
                     ],
                   ],
                 },
-                [ha.text("resume")],
+                [ha.text("resume")]
               ),
             ha.h(
               "span",
@@ -711,7 +699,7 @@ const runapp = (init, _lib) => {
                         hlib.runtime(),
                         s.editingGraph,
                         s.editingGraph.out ?? "out",
-                        "value",
+                        "value"
                       );
                       refresh_custom_editor();
                       requestAnimationFrame(() =>
@@ -725,14 +713,14 @@ const runapp = (init, _lib) => {
                             {},
                           ],
                           [UpdateSimulation, {}],
-                        ]),
+                        ])
                       );
                     },
                     {},
                   ],
                 ],
               },
-              [ha.text("refresh")],
+              [ha.text("refresh")]
             ),
             ha.h(
               "span",
@@ -741,12 +729,12 @@ const runapp = (init, _lib) => {
                 name: "undo",
                 onclick: (s: HyperappState) => [
                   s,
-                  (dispatch) => {
+                  () => {
                     nolib.no.runtime.undo(s.editingGraphId);
                   },
                 ],
               },
-              [ha.text("undo")],
+              [ha.text("undo")]
             ),
             ha.h(
               "span",
@@ -755,12 +743,12 @@ const runapp = (init, _lib) => {
                 name: "redo",
                 onclick: (s: HyperappState) => [
                   s,
-                  (dispatch) => {
+                  () => {
                     nolib.no.runtime.redo(s.editingGraphId);
                   },
                 ],
               },
-              [ha.text("redo")],
+              [ha.text("redo")]
             ),
             ha.h(
               "span",
@@ -769,7 +757,7 @@ const runapp = (init, _lib) => {
                 name: "help",
                 onclick: (s: HyperappState) => ({ ...s, showHelp: true }),
               },
-              [ha.text("question_mark")],
+              [ha.text("question_mark")]
             ),
           ]),
         ]),
@@ -796,18 +784,18 @@ const runapp = (init, _lib) => {
                       "span",
                       {
                         class: "material-symbols-outlined graph-action",
-                        onclick: (s: HyperappState, event) => ({
+                        onclick: (s: HyperappState, _event) => ({
                           ...s,
                           showHelp: false,
                         }),
                       },
-                      ha.text("close"),
-                    ),
+                      ha.text("close")
+                    )
                   ),
                   helpmd,
-                ],
+                ]
               ),
-            ],
+            ]
           ),
       ]),
     node: document.getElementById(init.html_id),
@@ -874,7 +862,7 @@ const runapp = (init, _lib) => {
                   editingGraphId: state.editingGraphId,
                 },
               ],
-            ],
+            ]
       ),
       [
         keydownSubscription,
@@ -891,8 +879,8 @@ const runapp = (init, _lib) => {
               state.editing !== false
                 ? "editing"
                 : state.searchFocused
-                  ? "searching"
-                  : "graph";
+                ? "searching"
+                : "graph";
             const key_input =
               (payload.ctrlKey ? "ctrl_" : "") +
               (payload.shiftKey ? "shift_" : "") +
@@ -917,7 +905,7 @@ const runapp = (init, _lib) => {
               case "graph_arrowup": {
                 const parent_edges = nolib.no.runtime.get_edges_in(
                   state.editingGraph,
-                  selected,
+                  selected
                 );
                 const node_id =
                   parent_edges?.[Math.ceil(parent_edges.length / 2) - 1]?.from;
@@ -926,7 +914,7 @@ const runapp = (init, _lib) => {
               }
               case "graph_arrowdown": {
                 const child_edge = Object.values(state.editingGraph.edges).find(
-                  (e) => e.from === selected,
+                  (e) => e.from === selected
                 );
                 const node_id = child_edge?.to;
                 action = node_id ? [SelectNode, { node_id }] : [state];
@@ -936,14 +924,14 @@ const runapp = (init, _lib) => {
               case "graph_arrowright": {
                 const dirmult = key_input === "arrowleft" ? 1 : -1;
                 const current_node = getNodes(state.simulation).find(
-                  (n) => n.node_id === selected,
+                  (n) => n.node_id === selected
                 );
                 if (state.levels) {
                   const siblings = state.levels.siblings.get(selected);
                   const node_id = siblings.reduce(
                     (dist, sibling) => {
                       const sibling_node = getNodes(state.simulation).find(
-                        (n) => n.node_id === sibling,
+                        (n) => n.node_id === sibling
                       );
                       if (!sibling_node) {
                         return dist;
@@ -958,8 +946,8 @@ const runapp = (init, _lib) => {
                     },
                     [state.dimensions.x, undefined] as [
                       number,
-                      d3NodeNode | undefined,
-                    ],
+                      d3NodeNode | undefined
+                    ]
                   )?.[1]?.node_id;
                   action = node_id ? [SelectNode, { node_id }] : [state];
                 }
@@ -976,7 +964,7 @@ const runapp = (init, _lib) => {
                     {
                       as: nolib.no.runtime.get_edge_out(
                         state.editingGraph,
-                        state.selected[0],
+                        state.selected[0]
                       ).as,
                     },
                   ];
@@ -991,7 +979,7 @@ const runapp = (init, _lib) => {
                       cut: true,
                       as: nolib.no.runtime.get_edge_out(
                         state.editingGraph,
-                        state.selected[0],
+                        state.selected[0]
                       ).as,
                     },
                   ];
@@ -1058,7 +1046,7 @@ const runapp = (init, _lib) => {
                 const link = getLinks(s.simulation).filter(
                   (link) =>
                     (link.source as d3NodeNode).node_id == s.selected[0] ||
-                    (link.target as d3NodeNode).node_id === s.selected[0],
+                    (link.target as d3NodeNode).node_id === s.selected[0]
                 )[0];
                 action = link && [
                   CreateNode,
@@ -1089,8 +1077,8 @@ const runapp = (init, _lib) => {
                           nolib.no.runtime.publish(
                             "show_all",
                             { data: true },
-                            hlibLib,
-                          ),
+                            hlibLib
+                          )
                         ),
                     ],
                   ],
@@ -1099,7 +1087,7 @@ const runapp = (init, _lib) => {
               }
               case "graph_ctrl_z": {
                 const child_edge = Object.values(state.editingGraph.edges).find(
-                  (e) => e.from === selected,
+                  (e) => e.from === selected
                 );
                 const node_id = child_edge?.to;
 
@@ -1114,14 +1102,14 @@ const runapp = (init, _lib) => {
                           ? s.selected
                           : [node_id],
                       };
-                    }),
-                  ),
+                    })
+                  )
                 );
                 break;
               }
               case "graph_ctrl_y": {
                 const child_edge = Object.values(state.editingGraph.edges).find(
-                  (e) => e.from === selected,
+                  (e) => e.from === selected
                 );
                 const node_id = child_edge?.to;
                 nolib.no.runtime.redo(state.editingGraphId);
@@ -1135,8 +1123,8 @@ const runapp = (init, _lib) => {
                           ? s.selected
                           : [node_id],
                       };
-                    }),
-                  ),
+                    })
+                  )
                 );
                 break;
               }
@@ -1146,7 +1134,7 @@ const runapp = (init, _lib) => {
                   nolib.no.runtime.publish(
                     "graphchangeready",
                     { graph: nolib.no.runtime.get_ref(s.editingGraphId) },
-                    nolibLib,
+                    nolibLib
                   );
                   return s;
                 };
@@ -1160,7 +1148,7 @@ const runapp = (init, _lib) => {
                 nolib.no.runtime.publish(
                   "keydown",
                   { data: key_input },
-                  hlibLib,
+                  hlibLib
                 );
               }
             }
@@ -1185,7 +1173,7 @@ const runapp = (init, _lib) => {
                 x: document.getElementById(init.html_id).clientWidth,
                 y: document.getElementById(init.html_id).clientHeight,
               },
-              hlibLib,
+              hlibLib
             ),
         ],
       ]),
@@ -1208,8 +1196,8 @@ const runapp = (init, _lib) => {
                   nolib.no.runtime.publish(
                     "show_all",
                     { data: p.event !== "effect_transform" },
-                    hlibLib,
-                  ),
+                    hlibLib
+                  )
                 ),
             ],
           ],
@@ -1231,14 +1219,14 @@ const editor = async function (html_id, editingGraphId, lib, inputNorun) {
       window.location.host === "nodysseus.io") ||
       (typeof self !== "undefined" && self.location.host === "nodysseus.io")
       ? "https://nodysseus.azurewebsites.net/api/graphs"
-      : "http://localhost:7071",
+      : "http://localhost:7071"
   );
   if (typeof self.SharedWorker !== "undefined") {
     sharedWorker = new SharedWorker("./sharedWorker.js" + location.search, {
       type: "module",
     });
     nodysseusStore = await webClientStore(() =>
-      sharedWorkerRefStore(sharedWorker.port, fallbackRefStore),
+      sharedWorkerRefStore(sharedWorker.port, fallbackRefStore)
     );
   } else {
     ports = [];
@@ -1249,12 +1237,12 @@ const editor = async function (html_id, editingGraphId, lib, inputNorun) {
         persist: true,
         run: (g, id) =>
           wrapPromise(hlib.runtime().runGraphNode(g, id)).then((outputs) =>
-            hlib.runtime().run(outputs.value),
+            hlib.runtime().run(outputs.value)
           ).value,
         graphChangeCallback: (graph, changedNodes) =>
           nolib.no.runtime.change_graph(graph, nolibLib, changedNodes, true),
         fallbackRefStore,
-      }),
+      })
     );
   }
   let worker: Worker, workerPromise;
@@ -1265,23 +1253,23 @@ const editor = async function (html_id, editingGraphId, lib, inputNorun) {
       if (sharedWorker) {
         sharedWorker.port.postMessage(
           { kind: "addPort", port: workerMessageChannel.port1 },
-          [workerMessageChannel.port1],
+          [workerMessageChannel.port1]
         );
       } else {
         initPort(
           { value: nodysseusStore.refs, initQueue },
           ports,
-          workerMessageChannel.port1,
+          workerMessageChannel.port1
         );
       }
       worker = new Worker("./worker.js" + location.search, { type: "module" });
-      workerPromise = new Promise((res, rej) => {
+      workerPromise = new Promise((res, _rej) => {
         worker.addEventListener("message", (msg) => {
           if (msg.data.type === "started") {
             if (workerMessageChannel) {
               worker.postMessage(
                 { kind: "connect", port: workerMessageChannel.port2 },
-                [workerMessageChannel.port2],
+                [workerMessageChannel.port2]
               );
             }
             workerPromise = false;
@@ -1308,13 +1296,13 @@ const editor = async function (html_id, editingGraphId, lib, inputNorun) {
   const editingGraph: Graph =
     editingGraphId === "helloWorld"
       ? (((helloWorld as Graph).edges_in = Object.values(
-          helloWorld.edges,
+          helloWorld.edges
         ).reduce(
           (acc: Record<string, Record<string, Edge>>, edge: Edge) => ({
             ...acc,
             [edge.to]: { ...(acc[edge.to] ?? {}), [edge.from]: edge },
           }),
-          {},
+          {}
         )),
         await hlibLib.data.no.runtime.add_ref(helloWorld),
         helloWorld)
