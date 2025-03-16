@@ -4,7 +4,7 @@
     "allowJs": true,
     "target": "esnext",
     "moduleResolution": "nodenext",
-    "module": "nodenext",
+    "module": "node18",
     "esModuleInterop": true,
     "skipLibCheck": true,
     "resolveJsonModule": true,

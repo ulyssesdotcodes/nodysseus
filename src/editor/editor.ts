@@ -53,7 +53,7 @@ import {
 } from "./components/graphDisplay.js";
 import Autocomplete from "./autocomplete.js";
 import { automergeRefStore } from "./automergeStore.js";
-import helloWorld from "../initgraph.json";
+import helloWorld from "../initgraph.json" with {type : "json"};
 import { run_h } from "./hyperapp.js";
 import { urlRefStore } from "src/store.js";
 
@@ -1329,7 +1329,7 @@ const editor = async function (html_id, editingGraphId, lib, inputNorun) {
             [edge.to]: { ...(acc[edge.to] ?? {}), [edge.from]: edge },
           }),
           {}
-        )),
+        ) as Record<string, Record<string, Edge>>),
         await hlibLib.data.no.runtime.add_ref(helloWorld),
         helloWorld)
       : (await hlibLib.data.no.runtime.get_ref(editingGraphId)) ?? helloWorld;
