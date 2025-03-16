@@ -2145,6 +2145,14 @@ public addListenerVarNode<T>(nodeGraphId, listener, stateId = nodeGraphId){
             nodeGraphId + extraNodeGraphId,
             useExisting,
           );
+        } else if (refNode.value === "extern.data") {
+          return this.mapNode(
+            calculateInputs(),
+            (args) => args as unknown as T,
+            undefined,
+            nodeGraphId,
+            useExisting
+          );
         } else {
           if (extraNodeGraphId === "metadata") {
             const libExternFn =
