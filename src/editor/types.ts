@@ -48,6 +48,7 @@ export type HyperappState = {
   selected: Array<string>;
   selected_edges_in: Array<Edge>;
   error: false | NodysseusError;
+  showErrors: boolean;
   levels: false | Levels;
   randid: string;
   inputs: Record<string, string>;

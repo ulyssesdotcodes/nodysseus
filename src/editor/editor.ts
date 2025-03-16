@@ -53,7 +53,7 @@ import {
 } from "./components/graphDisplay.js";
 import Autocomplete from "./autocomplete.js";
 import { automergeRefStore } from "./automergeStore.js";
-import helloWorld from "../initgraph.json" assert { type: "json" };
+import helloWorld from "../initgraph.json";
 import { run_h } from "./hyperapp.js";
 import { urlRefStore } from "src/store.js";
 
@@ -164,36 +164,62 @@ const search_el = ({ search }) =>
       ),
   ]);
 
-const show_error = (e, _t?) => ({
-  dom_type: "div",
-  props: { class: "errors" },
-  children: (Array.isArray(e)
-    ? [...new Set(e.map((se) => se).filter((em) => em))]
-    : [e]
-  ).flatMap((e: NodysseusError) =>
-    [
+const show_error = (e, showErrors) => {
+  const errors = ha.h(
+    "div",
+    {
+      class: "errors", style: {
+        display: showErrors ? "block" : "none"
+      }
+    },
+    (Array.isArray(e)
+      ? [...new Set(e.map((se) => se).filter((em) => em))]
+      : [e]
+    ).flatMap((e: NodysseusError) =>
+      [
+        ha.h("pre",
+          {},
+          [
+
+            ha.h("span",
+              { class: "message" },
+              [ha.text(`${e.message}\n\n`)],
+            ),
+            e.cause?.node_id &&
+            ha.h("span",
+              {
+                class: "goto",
+                onclick: [SelectNode, { node_id: e.cause.node_id.split("/")[1] }],
+              },
+              [ha.text(">>")],
+            ),
+          ].filter((c) => c))
+
+      ].filter((c) => c)
+    )
+  );
+
+  return ha.h("div", { class: "error-wrapper" }, [
+    ha.h(
+      "span",
       {
-        dom_type: "pre",
-        props: {},
-        children: [
-          {
-            dom_type: "span",
-            props: { class: "message" },
-            children: [{ dom_type: "text_value", text: `${e.message}\n\n` }],
-          },
-          e.cause?.node_id && {
-            dom_type: "span",
-            props: {
-              class: "goto",
-              onclick: [SelectNode, { node_id: e.cause.node_id.split("/")[1] }],
-            },
-            children: [{ dom_type: "text_value", text: ">>" }],
-          },
-        ].filter((c) => c),
+        class: "material-symbols-outlined",
+        style: {
+          position: "relative",
+          zIndex: "12",
+          cursor: "pointer",
+          userSelect: "none",
+          padding: "0.4em",
+        },
+        onclick: (s: HyperappState) => (
+          console.log("clicked error"), [{ ...s, showErrors: !s.showErrors }]
+        ),
       },
-    ].filter((c) => c)
-  ),
-});
+      [ha.text("error")]
+    ),
+    errors,
+  ]);
+};
 
 const result_display = (html_id) => embeddedHTMLView(html_id + "-result");
 // ha.app({
@@ -578,7 +604,7 @@ const runapp = (init, _lib) => {
           ha.h(
             "div",
             { id: "node-editor-error" },
-            s.error && run_h(show_error(s.error))
+            s.error && show_error(s.error, s.showErrors)
           ),
           ha.h("div", { id: "graph-actions", class: "actions" }, [
             search_el({ search: s.search }),
@@ -1337,6 +1363,7 @@ const editor = async function (html_id, editingGraphId, lib, inputNorun) {
     selected_edges_in: [],
     levels: false,
     error: false,
+    showErrors: false,
     inputs: {},
     randid: create_randid(editingGraph),
     custom_editor_result: {},
