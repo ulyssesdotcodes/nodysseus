@@ -103,7 +103,7 @@ export const nodysseus_get = (
     return naive;
   }
 
-  let prop;
+  let prop: string;
   if (props.length === 0) {
     if (typeof propsArg == "string") {
       if (propsArg.includes(".")) {
@@ -159,7 +159,7 @@ export const nodysseus_get = (
   return obj;
 };
 
-function compare(value1: any, value2: any) {
+const compare = (value1: any, value2: any) => {
   if (value1 === value2) {
     return true;
   }
@@ -201,14 +201,14 @@ function compare(value1: any, value2: any) {
   }
 
   return compareNativeSubrefs(value1, value2);
-}
+};
 
-function compareNativeSubrefs(value1, value2) {
+const compareNativeSubrefs = (value1: any, value2: any) => {
   // e.g. Function, RegExp, Date
   return value1.toString() === value2.toString();
-}
+};
 
-function compareArrays(value1: any[], value2: any[]) {
+const compareArrays = (value1: any[], value2: any[]) => {
   const len = value1.length;
   if (len != value2.length) {
     return false;
@@ -221,11 +221,11 @@ function compareArrays(value1: any[], value2: any[]) {
     }
   }
   return alike;
-}
+};
 
-const hashcode = function (str: string, seed = 0) {
-  let h1 = 0xdeadbeef ^ seed,
-    h2 = 0x41c6ce57 ^ seed;
+const hashcode = (str: string, seed: number = 0) => {
+  let h1: number = 0xdeadbeef ^ seed,
+    h2: number = 0x41c6ce57 ^ seed;
   let i = str.length,
     ch: number;
   while (i > 0) {
