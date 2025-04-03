@@ -222,24 +222,6 @@ const show_error = (e, showErrors) => {
 };
 
 const result_display = (html_id) => embeddedHTMLView(html_id + "-result");
-// ha.app({
-//   init: {el: {dom_type: "div", props: {}, children: []}},
-//   node: document.getElementById(html_id + "-result"),
-//   dispatch: middleware,
-//   view: s => {
-//     try{
-//       return run_h({dom_type: "div", props: {id: `${html_id}-result`}, children: [s.el]})
-//     } catch(e) {
-//       console.error(e);
-//       try{
-//         return run_h({dom_type: "div", props: {id: `${html_id}-result`}, children: [show_error(e, JSON.stringify(s.el))]})
-//       } catch(e) {
-//         return run_h({dom_type: "div", props: {id: `${html_id}-result`}, children: [{dom_type: "text_value", text: "Could not show error"}]})
-//       }
-//     }
-//   }
-// })
-//
 
 const custom_editor_display = (html_id) =>
   ha.app({
@@ -266,9 +248,6 @@ const refresh_custom_editor = () =>
         el: { dom_type: "div", props: {}, children: [] },
       }));
     }
-    custom_editor_display_dispatch(() => ({
-      el: { dom_type: "div", props: {}, children: [] },
-    }));
   }).value;
 
 const defs = () =>
@@ -450,7 +429,7 @@ const runapp = (init, _lib) => {
             .then((graph) => graph && hlib.run(hlib.runtime(), graph, "out"))
             .then(
               (custom_editor_result) =>
-                custom_editor_result &&
+                (console.log("custom_editor_result", custom_editor_result), custom_editor_result) &&
                 dispatch((s) => ({ ...s, custom_editor_result }))
             ),
       ],

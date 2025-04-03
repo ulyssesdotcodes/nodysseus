@@ -71,7 +71,7 @@ import {
 import { parser } from "@lezer/javascript";
 import { v4 as uuid } from "uuid";
 import { runh } from "./hyperapp.js";
-import domTypes from "../html-dom-types.json" assert { type: "json" };
+import domTypes from "../html-dom-types.json" with { type: "json" };
 import { Compartment, StateEffectType, StateField } from "@codemirror/state";
 import { json, jsonParseLinter } from "@codemirror/lang-json";
 import { javascript } from "@codemirror/lang-javascript";

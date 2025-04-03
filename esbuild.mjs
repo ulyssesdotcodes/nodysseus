@@ -1,8 +1,8 @@
-import * as esbuild from 'esbuild'
-import { wasmLoader } from 'esbuild-plugin-wasm';
+import * as esbuild from "esbuild"
+import { wasmLoader } from "esbuild-plugin-wasm";
 import fs from "node:fs/promises";
 import http from "node:http";
-import { elementTypes } from './generate-element-types.mjs';
+import { elementTypes } from "./generate-element-types.mjs";
 
 const outputjson = JSON.stringify(elementTypes);
 await fs.writeFile("src/html-dom-types.json", outputjson)
@@ -73,21 +73,21 @@ await fs.writeFile("src/html-dom-types.json", outputjson)
 
 const ctx = await esbuild.context({
   entryPoints: [
-    {in: 'src/index.js', out: 'index.bundle'},
-    {in: 'src/worker.js', out: 'worker'},
-    {in: 'src/sharedWorker.ts', out: 'sharedWorker'},
-    {in: 'src/browser-esm.js', out: 'browser-esm'}
+    {in: "src/index.js", out: "index.bundle"},
+    {in: "src/worker.js", out: "worker"},
+    {in: "src/sharedWorker.ts", out: "sharedWorker"},
+    {in: "src/browser-esm.js", out: "browser-esm"}
   ],
   loader: {
-    '.wasm': 'file'
+    ".wasm": "file"
   },
   bundle: true,
-  outdir: 'public',
+  outdir: "public",
   plugins: [wasmLoader()],
-  external: ['node:https'],
+  external: ["node:https"],
   sourcemap: true,
-  target: 'es2022',
-  format: 'esm'
+  target: "esnext",
+  format: "esm"
 });
 
 await ctx.watch();
@@ -107,8 +107,8 @@ http.createServer((req, res) => {
   const proxyReq = http.request(options, proxyRes => {
     // If esbuild returns "not found", send a custom 404 page
     if (proxyRes.statusCode === 404) {
-      res.writeHead(404, { 'Content-Type': 'text/html' })
-      res.end('<h1>A custom 404 page</h1>')
+      res.writeHead(404, { "Content-Type": "text/html" })
+      res.end("<h1>A custom 404 page</h1>")
       return
     }
 
