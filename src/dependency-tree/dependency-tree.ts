@@ -969,13 +969,14 @@ public addListenerVarNode<T>(nodeGraphId, listener, stateId = nodeGraphId){
         }
 
         let scriptFn;
+        const inputs = edgesIn.map((e) => e.as);
         try {
           scriptFn = new Function(
             "_lib",
             "_node",
             "_node_args",
             "wrapPromise",
-            ...edgesIn.map((e) => e.as),
+            ...inputs,
             refNode.value,
           ) as (...args: any[]) => any;
         } catch (e) {
@@ -993,7 +994,7 @@ public addListenerVarNode<T>(nodeGraphId, listener, stateId = nodeGraphId){
                 node,
                 args,
                 wrapPromise,
-                ...Object.values(args),
+                ...inputs.map(i => args[i])
               );
             } catch (e) {
               handleError(e, nodeGraphId);
