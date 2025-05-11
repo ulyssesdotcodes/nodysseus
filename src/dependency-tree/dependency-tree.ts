@@ -538,6 +538,7 @@ export class NodysseusRuntime {
             this.dirty(node.id);
           }
         }
+        return newValue;
       },
       compare,
       id,
