@@ -57,7 +57,7 @@ self.addEventListener('fetch', (e) => {
           .then(r => Array.isArray(r) ? new Response(r[0]
             .replaceAll(/(from|import) ['"]three['"]/g, "$1 'https://cdn.jsdelivr.net/npm/three@0.176.0/build/three.webgpu.js'")
             .replaceAll(/(from|import) ['"]three\/webgpu['"]/g, "$1 'https://cdn.jsdelivr.net/npm/three@0.176.0/build/three.webgpu.js'")
-            .replaceAll(/(from|import) ['"]three\/tsl['"]/g, "$1 'https://cdn.jsdelivr.net/npm/three@0.176.0/build/three.TSL.js'")
+            .replaceAll(/(from|import) ['"]three\/tsl['"]/g, "$1 'https://cdn.jsdelivr.net/npm/three@0.176.0/build/three.tsl.js'")
             .replaceAll(/(from|import) ['"]three\/nodes['"]/g, "$1 'https://cdn.jsdelivr.net/npm/three@0.176.0/src/nodes/Nodes.js'"),
             {
             headers: r[1].headers
