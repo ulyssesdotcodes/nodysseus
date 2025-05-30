@@ -359,7 +359,8 @@ export const d3subscription = (dispatch: ha.Dispatch<HyperappState>, props) => {
           const x = n.x - node_el_width * 0.5
           const y = n.y 
 
-          el.style.setProperty("transform", `translate(${(x - 20).toFixed()}px, ${(y - 20).toFixed()}px)`);
+          el.style.setProperty("--tx", `${(x - 20).toFixed()}px`)
+          el.style.setProperty("--ty", `${(y - 20).toFixed()}px`)
 
           if(n.node_id === selected) {
             visible_nodes.push({x, y})

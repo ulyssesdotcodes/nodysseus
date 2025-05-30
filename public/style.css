@@ -159,17 +159,16 @@ svg {
 
 .node {
     cursor: pointer;
-    /* transform: translate(var(--tx), var(--ty)) */
+     transform: translate(var(--tx), var(--ty)) 
 }
 
-/* 
---tx and --ty have bad performance  so we just disable the zoom scale
+
 .node:has(text .node-name) {
   transform: scale(calc(1 / min(var(--zoom-scale), 1))) translate(calc(var(--tx) * min(var(--zoom-scale), 1)), calc(var(--ty) * min(var(--zoom-scale), 1)));
   stroke: #000;
   rx: 1;
   stroke-width: 2;
-} */
+} 
 
 .node:hover {
     opacity: 1 !important;
